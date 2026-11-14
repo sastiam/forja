@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -13,6 +13,7 @@ import { repoRoot } from "../src/core/paths.ts";
 import { type Ctx, computePlan } from "../src/core/plan.ts";
 import { loadProfile } from "../src/core/profile.ts";
 import { createFakeRunner, createRunner } from "../src/core/runners/shell.ts";
+import { parse, type TomlTable } from "../src/core/toml.ts";
 
 const fixture = join(fileURLToPath(import.meta.url), "..", "fixtures", "profile.fixture.toml");
 
@@ -74,7 +75,16 @@ test("apply --dry-run no escribe nada fuera de un directorio temporal", async ()
     // sin dry-run sí escribe, y solo bajo HOME temporal
     const real = await ctxWith(createRunner(false));
     await writeChezmoiConfig(real.ctx);
-    assert.ok(existsSync(join(home, ".config", "chezmoi", "chezmoi.toml")));
+    const cfg = join(home, ".config", "chezmoi", "chezmoi.toml");
+    assert.ok(existsSync(cfg));
+    const data = parse(readFileSync(cfg, "utf8")).data as TomlTable;
+    const sb = data.claude_sandbox as TomlTable;
+    assert.deepEqual(sb.allowed_domains, [
+      "github.com",
+      "api.github.com",
+      "registry.example.invalid",
+    ]);
+    assert.deepEqual(sb.allow_read, ["~/.config/forja/local/git.local.gitconfig", "~/.npmrc"]);
   } finally {
     process.env.HOME = saved.HOME;
     if (saved.XDG === undefined) delete process.env.XDG_CONFIG_HOME;

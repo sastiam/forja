@@ -19,3 +19,8 @@ agent_key = "~/.config/forja/agent-signing"
 
 [secrets]
 provider = "none"
+
+# Extras personales del sandbox de Claude Code (ADR 0010); se suman a hosts/<host>.toml [claude].
+[claude]
+allowed_domains = ["registry.example.invalid"]
+allow_read = ["~/.npmrc"]
