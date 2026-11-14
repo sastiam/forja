@@ -16,10 +16,17 @@ test("parseBrewfile lee brew y cask, normaliza taps e ignora comentarios", () =>
 
 test("unmanaged: lo instalado que no está en ningún Brewfile", () => {
   const declared = parseBrewfile('brew "jq"\ncask "zed"\n', "core");
-  assert.deepEqual(unmanaged({ brew: ["jq", "htop"], cask: ["zed", "orbstack"] }, declared), [
-    { kind: "brew", name: "htop" },
-    { kind: "cask", name: "orbstack" },
-  ]);
+  declared.push(...parseBrewfile('brew "floci-io/floci/floci"\n', "containers"));
+  assert.deepEqual(
+    unmanaged(
+      { brew: ["jq", "htop", "floci-io/floci/floci"], cask: ["zed", "orbstack"] },
+      declared,
+    ),
+    [
+      { kind: "brew", name: "htop" },
+      { kind: "cask", name: "orbstack" },
+    ],
+  );
 });
 
 test("changedOnDisk: solo la primera columna de chezmoi status", () => {

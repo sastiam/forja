@@ -5,7 +5,7 @@ import { parseArgs } from "node:util";
 import { load } from "../core/context.ts";
 import { log, out, outJson } from "../core/log.ts";
 import type { Module } from "../core/modules.ts";
-import { chezmoiSource } from "../core/plan.ts";
+import { chezmoiSource, moduleTargets } from "../core/plan.ts";
 import { ask, confirm, isInteractive } from "../core/prompt.ts";
 import { BREW_OFFLINE_ENV } from "../core/runners/brew.ts";
 import { commandExists, createRunner, type Runner } from "../core/runners/shell.ts";
@@ -32,8 +32,9 @@ export function unmanaged(
   installed: { brew: string[]; cask: string[] },
   declared: Declared[],
 ): { kind: "brew" | "cask"; name: string }[] {
+  // `brew leaves` da el nombre completo de las fórmulas de tap (org/tap/x).
   const has = (kind: string, name: string) =>
-    declared.some((d) => d.kind === kind && d.name === name);
+    declared.some((d) => d.kind === kind && d.name === name.split("/").at(-1));
   return [
     ...installed.brew
       .filter((n) => !has("brew", n))
@@ -97,7 +98,8 @@ export async function captureCommand(argv: string[]): Promise<number> {
   let templates: string[] = [];
   const source = chezmoiSource(ctx.root);
   if (await commandExists(runner, "chezmoi")) {
-    const targets = only ? (all.get(only)?.targets ?? []) : [];
+    const mod = only ? all.get(only) : undefined;
+    const targets = mod ? moduleTargets(mod) : [];
     const st = await runner.query("chezmoi", ["--source", source, "status", ...targets]);
     const changed = changedOnDisk(st.stdout, homedir());
     for (const f of changed) {
