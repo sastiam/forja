@@ -1,5 +1,5 @@
 name = "containers"
-summary = "OrbStack + Floci + AWS CLI + CDK (AWS local)"
+summary = "Colima + Docker CLI + Floci + AWS CLI + CDK (AWS local)"
 os = ["darwin"]
 depends = ["core"]
 targets = ["~/.aws/config", "~/.aws/credentials"]

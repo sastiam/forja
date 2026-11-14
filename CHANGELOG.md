@@ -4,6 +4,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Unreleased]
 
+### Added
+- Firma ssh de agentes: campo `[signing] agent_key` del perfil, `wt new --agent` la activa por worktree y `doctor` comprueba la clave (ADR 0008).
+- `forja report [-o archivo.md]`: exporta el estado de la máquina (módulos y diagnóstico) a Markdown.
+
+### Changed
+- `containers`: Colima + Docker CLI sustituyen a OrbStack como runtime por defecto (ADR 0007); el check acepta ambos contextos.
+
 ## [0.1.0] - 2026-11-14
 
 ### Added

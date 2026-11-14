@@ -5,6 +5,7 @@ import { log, out, outJson } from "../core/log.ts";
 import { expandHome } from "../core/paths.ts";
 import { loadHooks, type ModuleCtx, osName } from "../core/plan.ts";
 import { createRunner, type Runner } from "../core/runners/shell.ts";
+import { signingFindings } from "../core/signing.ts";
 import { loadWorktrees } from "../core/state.ts";
 
 export interface Finding {
@@ -35,6 +36,7 @@ export async function systemChecks(runner: Runner, platform: string): Promise<Fi
       "~/Library/pnpm/store",
       "~/.local/share/pnpm",
       "~/.orbstack",
+      "~/.colima",
     ]
       .map(expandHome)
       .filter(existsSync);
@@ -58,12 +60,7 @@ export async function systemChecks(runner: Runner, platform: string): Promise<Fi
   return f;
 }
 
-export async function doctorCommand(argv: string[]): Promise<number> {
-  const { values } = parseArgs({
-    args: argv,
-    allowPositionals: true,
-    options: { json: { type: "boolean" }, fix: { type: "boolean" } },
-  });
+export async function collectFindings(): Promise<Finding[]> {
   const findings: Finding[] = [];
   let loaded: Awaited<ReturnType<typeof load>> | null = null;
   try {
@@ -73,6 +70,8 @@ export async function doctorCommand(argv: string[]): Promise<number> {
   }
   if (loaded) {
     const { ctx, all, order } = loaded;
+    const agentKey = ctx.profile.signing.agent_key;
+    if (agentKey) findings.push(...(await signingFindings(ctx.runner, agentKey, ctx.platform)));
     for (const name of order) {
       const m = all.get(name);
       if (!m || (m.os.length && !m.os.includes(osName(ctx.platform)))) continue;
@@ -96,6 +95,16 @@ export async function doctorCommand(argv: string[]): Promise<number> {
   findings.push(
     ...(await systemChecks(loaded?.ctx.runner ?? createRunner(true), process.platform)),
   );
+  return findings;
+}
+
+export async function doctorCommand(argv: string[]): Promise<number> {
+  const { values } = parseArgs({
+    args: argv,
+    allowPositionals: true,
+    options: { json: { type: "boolean" }, fix: { type: "boolean" } },
+  });
+  const findings = await collectFindings();
   const failed = findings.some((x) => x.status === "fail");
   if (values.json) outJson({ ok: !failed, findings });
   else {

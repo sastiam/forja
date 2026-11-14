@@ -6,4 +6,5 @@ Explicación para humanos: qué hace cada módulo y por qué se eligió.
 - Tabla de módulos y cómo revertirlos: [`../modules.md`](../modules.md).
 - Cada módulo documenta su razón de ser en `modules/<nombre>/README.md`.
 - Verificación manual en una Mac real: [`verificacion.md`](verificacion.md).
+- Firma verificable de commits de agentes: [`firma.md`](firma.md).
 - Decisiones de diseño: [`../adr/`](../adr/).
