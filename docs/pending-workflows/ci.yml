@@ -81,3 +81,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sh scripts/check-agnostic.sh
+
+  # Check único para la protección de main y el auto-merge de Dependabot:
+  # exige solo «ci» en GitHub y añade jobs aquí sin tocar la configuración.
+  ci:
+    if: always()
+    needs: [test, lint, plan, secrets, agnostic]
+    runs-on: ubuntu-latest
+    steps:
+      - name: todos los jobs en verde
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}" = "true" ]; then
+            echo "algún job no pasó: ${{ join(needs.*.result, ', ') }}" >&2
+            exit 1
+          fi

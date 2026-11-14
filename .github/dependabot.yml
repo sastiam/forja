@@ -8,3 +8,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # Los tipos siguen al mínimo de engines (node >=22.18): una API de Node 26
+      # tiparía bien y fallaría en runtime en Node 22.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
