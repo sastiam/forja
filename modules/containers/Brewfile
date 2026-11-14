@@ -1,10 +1,9 @@
 tap "floci-io/floci"
-# Runtime por defecto: Colima (MIT, gratis en uso comercial). Ver docs/adr/0007.
+# Runtime único: Colima (MIT, gratis en uso comercial). OrbStack ya no se usa (ADR 0007).
 brew "colima"
 brew "docker"
 brew "docker-compose"
-# Alternativa si Colima da problemas (licencia Pro si el uso es comercial):
-# cask "orbstack"
+# VERIFICAR: fijar versión de Floci cuando el tap publique fórmulas versionadas (BACKLOG).
 brew "floci-io/floci/floci"
 brew "awscli"
 brew "aws-cdk"

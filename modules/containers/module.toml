@@ -8,4 +8,4 @@ requires_sudo = false
 optional = false
 
 [checks]
-commands = ["docker context show", "floci --version"]
+commands = ["docker context show", "floci --version", "aws --version", "cdk --version"]

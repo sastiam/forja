@@ -2,7 +2,7 @@
 
 ## Por evaluar
 - [ ] editor: volver a probar tsgo en Zed cuando se corrija el watcher recursivo sobre symlinks de pnpm.
-- [ ] containers: Colima ya es el runtime por defecto (ADR 0007). Medir pnpm install + hot reload del monorepo real en OrbStack vs Colima y registrar resultados en un ADR. Sin benchmark público de pnpm que compare ambos; hay que medirlo con `time pnpm install` (store limpio, Colima con virtiofs).
+- [x] containers: benchmark Colima vs OrbStack descartado; OrbStack fuera (actualización de ADR 0007).
 - [ ] agents: confirmar si OpenCode lee ~/.claude/skills para no duplicar enlaces.
 - [ ] agents: evaluar servidores MCP HTTP compartidos para no multiplicar procesos stdio por sesión.
 - [ ] git: evaluar si Fork reemplaza a Sublime Merge (falta verificar si muestra la base en conflictos).
