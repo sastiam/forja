@@ -2,7 +2,10 @@ import { existsSync } from "node:fs";
 import { join, normalize } from "node:path";
 import { parseArgs } from "node:util";
 import { log, out } from "../core/log.ts";
+import { profilePath } from "../core/paths.ts";
+import { loadProfile } from "../core/profile.ts";
 import { createRunner, type Runner } from "../core/runners/shell.ts";
+import { enableAgentSigning } from "../core/signing.ts";
 import { type Owner, upsertWorktree, type WorktreeRecord } from "../core/state.ts";
 import { renderEnv } from "./env.ts";
 import { defaultBase, git, gitOk, mainRepoRoot, refExists, worktreePath } from "./git.ts";
@@ -14,6 +17,8 @@ export interface NewOptions {
   base?: string;
   agent?: Owner;
   fetch?: boolean;
+  /** Ruta de la clave privada de firma de agentes (perfil [signing] agent_key). */
+  signingKey?: string;
 }
 
 /** Crea un worktree. Los mensajes van a stderr; devuelve el registro. */
@@ -41,6 +46,16 @@ export async function createWorktree(
   if (await refExists(runner, repo, branch))
     await gitOk(runner, repo, ["worktree", "add", path, branch], true);
   else await gitOk(runner, repo, ["worktree", "add", "-b", branch, path, base], true);
+
+  if (owner !== "human") {
+    if (o.signingKey) {
+      log.step("firma ssh de agentes (solo este worktree)");
+      await enableAgentSigning(runner, repo, path, o.signingKey);
+    } else
+      log.warn(
+        "sin [signing] agent_key en el perfil: los commits de este agente irán SIN firmar (ver docs/guide/firma.md)",
+      );
+  }
 
   const project = await loadProject(repo);
   const include = [...(await loadWorktreeInclude(repo)), ...project.copy];
@@ -110,7 +125,9 @@ export async function wtNew(argv: string[]): Promise<number> {
   if (agent && !["claude", "opencode", "hermes"].includes(agent))
     throw new Error(`--agent inválido: ${agent}`);
   const runner = createRunner(false);
+  const profile = await loadProfile(profilePath()).catch(() => null);
   const rec = await createWorktree(runner, process.cwd(), {
+    signingKey: profile?.signing.agent_key,
     branch,
     base: values.base,
     agent: agent as Owner | undefined,

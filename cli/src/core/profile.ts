@@ -16,6 +16,7 @@ export interface Profile {
   identity: { name: string; email: string };
   profiles: { work?: WorkProfile; personal?: { code_dir?: string } };
   notify: { ntfy_topic_file?: string };
+  signing: { agent_key?: string };
   secrets: { provider: "1password" | "none" };
 }
 
@@ -52,6 +53,7 @@ export function validateProfile(raw: TomlTable): Profile {
   const work = table(profiles.work, "profiles.work");
   const personal = table(profiles.personal, "profiles.personal");
   const secrets = table(raw.secrets, "secrets");
+  const signing = table(raw.signing, "signing");
   const provider = str(secrets.provider, "secrets.provider") ?? "none";
   if (provider !== "1password" && provider !== "none")
     throw new ProfileError('secrets.provider: "1password" o "none"');
@@ -68,6 +70,7 @@ export function validateProfile(raw: TomlTable): Profile {
     notify: {
       ntfy_topic_file: str(table(raw.notify, "notify").ntfy_topic_file, "notify.ntfy_topic_file"),
     },
+    signing: { agent_key: str(signing.agent_key, "signing.agent_key") },
     secrets: { provider },
   };
   if (Object.keys(work).length) {
@@ -115,6 +118,7 @@ export function profileToToml(p: Profile): TomlTable {
   if (p.profiles.personal?.code_dir) profiles.personal = { code_dir: p.profiles.personal.code_dir };
   if (Object.keys(profiles).length) out.profiles = profiles;
   if (p.notify.ntfy_topic_file) out.notify = { ntfy_topic_file: p.notify.ntfy_topic_file };
+  if (p.signing.agent_key) out.signing = { agent_key: p.signing.agent_key };
   out.secrets = { provider: p.secrets.provider };
   return out;
 }

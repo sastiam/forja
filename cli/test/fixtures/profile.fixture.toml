@@ -14,5 +14,8 @@ code_dir = "~/code/work"
 [profiles.personal]
 code_dir = "~/code/personal"
 
+[signing]
+agent_key = "~/.config/forja/agent-signing"
+
 [secrets]
 provider = "none"

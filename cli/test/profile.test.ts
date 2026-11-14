@@ -41,3 +41,18 @@ test("round-trip del perfil", async () => {
   assert.ok(p);
   assert.deepEqual(validateProfile(parse(stringify(profileToToml(p)))), p);
 });
+
+test("signing.agent_key debe ser string y sobrevive al round-trip", async () => {
+  assert.throws(
+    () =>
+      validateProfile({
+        schema: 1,
+        host: "x",
+        identity: { name: "n", email: "e" },
+        signing: { agent_key: 5 },
+      }),
+    /signing.agent_key/,
+  );
+  const p = await loadProfile(fixture);
+  assert.equal(p?.signing.agent_key, "~/.config/forja/agent-signing");
+});

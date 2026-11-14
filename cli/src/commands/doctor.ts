@@ -5,6 +5,7 @@ import { log, out, outJson } from "../core/log.ts";
 import { expandHome } from "../core/paths.ts";
 import { loadHooks, type ModuleCtx, osName } from "../core/plan.ts";
 import { createRunner, type Runner } from "../core/runners/shell.ts";
+import { signingFindings } from "../core/signing.ts";
 import { loadWorktrees } from "../core/state.ts";
 
 export interface Finding {
@@ -69,6 +70,8 @@ export async function collectFindings(): Promise<Finding[]> {
   }
   if (loaded) {
     const { ctx, all, order } = loaded;
+    const agentKey = ctx.profile.signing.agent_key;
+    if (agentKey) findings.push(...(await signingFindings(ctx.runner, agentKey, ctx.platform)));
     for (const name of order) {
       const m = all.get(name);
       if (!m || (m.os.length && !m.os.includes(osName(ctx.platform)))) continue;
