@@ -143,19 +143,23 @@ export function createRunner(dryRun: boolean): Runner {
 export function createFakeRunner(
   responses: (cmd: string, args: string[]) => Partial<ExecResult> | undefined = () => undefined,
   dryRun = true,
-): Runner & { calls: string[] } {
+): Runner & { calls: string[]; envs: (Record<string, string> | undefined)[] } {
   const calls: string[] = [];
+  /** `opts.env` de cada query/exec, en el mismo orden que sus entradas en `calls`. */
+  const envs: (Record<string, string> | undefined)[] = [];
   const skipped: string[] = [];
-  const answer = (cmd: string, args: string[]): ExecResult => {
+  const answer = (cmd: string, args: string[], opts?: ExecOptions): ExecResult => {
     calls.push([cmd, ...args].join(" "));
+    envs.push(opts?.env);
     return { code: 0, stdout: "", stderr: "", ...responses(cmd, args) };
   };
   return {
     dryRun,
     calls,
+    envs,
     skipped,
-    query: async (cmd, args) => answer(cmd, args),
-    exec: async (cmd, args) => answer(cmd, args),
+    query: async (cmd, args, opts) => answer(cmd, args, opts),
+    exec: async (cmd, args, opts) => answer(cmd, args, opts),
     writeFile: async (p) => void calls.push(`write ${p}`),
     mkdirp: async (p) => void calls.push(`mkdir ${p}`),
     link: async (t, p) => void calls.push(`link ${t} ${p}`),
