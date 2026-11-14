@@ -1,0 +1,11 @@
+name = "terminal"
+summary = "Ghostty con integración de shell"
+os = ["darwin", "linux"]
+depends = ["core"]
+targets = ["~/.config/ghostty"]
+risk = "low"
+requires_sudo = false
+optional = false
+
+[checks]
+commands = []

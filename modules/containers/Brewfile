@@ -1,0 +1,5 @@
+tap "floci-io/floci"
+cask "orbstack"   # licencia Pro si el uso es comercial
+brew "floci-io/floci/floci"
+brew "awscli"
+brew "aws-cdk"

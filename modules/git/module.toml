@@ -1,0 +1,11 @@
+name = "git"
+summary = "Git moderno, conflictos con mergiraf + Sublime Merge, rerere, zdiff3"
+os = ["darwin", "linux"]
+depends = ["core"]
+targets = ["~/.config/git", "~/.config/lazygit"]
+risk = "low"
+requires_sudo = false
+optional = false
+
+[checks]
+commands = ["git --version", "mergiraf --version", "smerge --version"]

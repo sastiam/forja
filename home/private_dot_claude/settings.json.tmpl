@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)", "Read(./.env.*)", "Read(~/.aws/**)", "Read(~/.ssh/**)",
+      "Read(~/.config/op/**)", "Read(~/.config/forja/local/**)",
+      "Edit(./.git/hooks/**)", "Edit(./.git/config)",
+      "Bash(git push --force*)", "Bash(git push origin main*)"
+    ],
+    "allow": ["Bash(pnpm *)", "Bash(forja *)", "Bash(git status)", "Bash(git diff*)", "Bash(git commit*)"]
+  },
+  "sandbox": { "enabled": true, "failIfUnavailable": true, "allowUnsandboxedCommands": false },
+  "hooks": {
+    "Notification": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/notify.sh" }] }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/notify.sh done" }] }]{{ if has "worktrees" .modules }},
+    "WorktreeCreate": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/worktree-create.sh" }] }],
+    "WorktreeRemove": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/worktree-remove.sh" }] }]{{ end }}
+  },
+  "statusLine": { "type": "command", "command": "~/.claude/statusline.sh" }
+}

@@ -1,0 +1,11 @@
+name = "worktrees"
+summary = "Hooks de Claude Code y plantillas para `forja wt`"
+os = ["darwin", "linux"]
+depends = ["agents", "git"]
+targets = ["~/.claude/settings.json", "~/.claude/hooks/worktree-create.sh", "~/.claude/hooks/worktree-remove.sh"]
+risk = "low"
+requires_sudo = false
+optional = false
+
+[checks]
+commands = ["forja version"]

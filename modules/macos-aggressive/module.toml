@@ -1,0 +1,11 @@
+name = "macos-aggressive"
+summary = "Capa opcional agresiva (exige confirmación escrita)"
+os = ["darwin"]
+depends = ["macos-base"]
+targets = []
+risk = "high"
+requires_sudo = true
+optional = true
+
+[checks]
+commands = []

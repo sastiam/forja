@@ -1,0 +1,2 @@
+cask "google-chrome"
+cask "dia"   # VERIFICAR: nombre exacto del cask de Dia (brew search dia)

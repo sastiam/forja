@@ -1,0 +1,11 @@
+name = "core"
+summary = "Xcode CLT, Homebrew y utilidades base"
+os = ["darwin"]
+depends = []
+targets = []
+risk = "low"
+requires_sudo = false
+optional = false
+
+[checks]
+commands = ["brew --version", "jq --version", "gh --version"]
