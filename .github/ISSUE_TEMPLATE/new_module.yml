@@ -1,0 +1,28 @@
+name: Nuevo módulo
+description: Propón un módulo nuevo
+labels: ["type:feature"]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Nombre del módulo
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: Qué instala o configura y por qué
+    validations:
+      required: true
+  - type: textarea
+    id: revert
+    attributes:
+      label: Cómo se revierte
+    validations:
+      required: true
+  - type: dropdown
+    id: hosts
+    attributes:
+      label: Hosts
+      multiple: true
+      options: [macos, fedora, raspi]

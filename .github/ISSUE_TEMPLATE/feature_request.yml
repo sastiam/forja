@@ -1,0 +1,21 @@
+name: Solicitud de mejora
+description: Propón una mejora
+labels: ["type:feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema o necesidad
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Propuesta
+    validations:
+      required: true
+  - type: input
+    id: module
+    attributes:
+      label: Módulo afectado
+      placeholder: git

@@ -1,0 +1,79 @@
+# forja
+
+[![CI](https://github.com/sastiam/forja/actions/workflows/ci.yml/badge.svg)](https://github.com/sastiam/forja/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.1.0-informational.svg)](CHANGELOG.md)
+
+Provisionamiento y optimización de estaciones de desarrollo con un solo comando, asistido por Claude Code (macOS primero; Fedora y Raspberry Pi planificados).
+
+## Qué es y para quién
+
+Para quien formatea su Mac (o configura una nueva) y quiere dejarla instalada, configurada y optimizada con un comando, y después mantenerla: detectar desvíos, capturar cambios hechos a mano y diagnosticar problemas. El repo es **público y agnóstico**: no contiene nada personal; tu perfil se genera en tu máquina (`~/.config/forja/`).
+
+## Inicio rápido
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/<usuario>/forja/main/bootstrap.sh | sh
+```
+
+Opciones: `--dry-run` (solo muestra), `--no-claude` (100 % determinista), `--dir <ruta>`, `--ref <tag|rama>`.
+
+## Cómo funciona
+
+```mermaid
+flowchart LR
+  A[bootstrap.sh<br/>CLT · Homebrew · mise · Node · Claude Code] --> B[forja setup<br/>perfil local]
+  B --> C[forja plan<br/>qué cambiaría]
+  C -->|confirmas| D[forja apply<br/>módulo por módulo]
+  D --> E[forja doctor<br/>verificación]
+  E -.->|día a día| F[drift · capture · wt · backlog]
+```
+
+Híbrido: la instalación la hace código determinista (Brewfile por módulo + chezmoi); Claude Code entra para entrevistar, diagnosticar y mantener (desde v0.2.0).
+
+## Comandos
+
+| Comando | Qué hace |
+|---|---|
+| `forja setup [--no-claude]` | Crea el perfil local, luego plan → apply → doctor |
+| `forja plan [módulo…] [--json]` | Muestra qué cambiaría; no modifica nada |
+| `forja apply [módulo…] [--yes] [--dry-run]` | Aplica módulos resolviendo dependencias |
+| `forja drift [--json]` | Detecta desvíos (sale con código 2) |
+| `forja doctor [--json]` | Diagnóstico de módulos y salud de la máquina |
+| `forja module ls / info <m>` | Módulos, dependencias y cómo revertir |
+| `forja wt new / ls / rm / prune / init-project` | Worktrees (ver `docs/SPEC.md` §2.6) |
+| `forja backlog add "<texto>" [--module m]` | Anota una mejora en `BACKLOG.md` |
+| `forja version` | Versión, commit, Node y host |
+
+Códigos de salida: `0` ok · `1` error · `2` desvío · `3` requiere confirmación. Pendientes: `capture`, `wt integrate` (v0.2.0), `wt night`, `self update` (v0.3.0).
+
+## Módulos
+
+`core`, `shell`, `git`, `runtimes`, `containers`, `editor`, `terminal`, `browsers`, `agents`, `worktrees`, `security`, `macos-base` (y `macos-aggressive`, opcional). Detalle y cómo revertir cada uno en [`docs/modules.md`](docs/modules.md).
+
+## Skills
+
+Fuente única en `skills/`, enlazada a Claude Code. Las skills solo llaman a la CLI. Completas en v0.1.0: `worktree-new`, `worktree-status`; el resto son borradores (`status: draft`).
+
+## Hosts soportados
+
+| Host | Estado |
+|---|---|
+| Mac (Apple silicon, macOS 26+) | ✅ |
+| Fedora | 🗓 planificado |
+| Raspberry Pi | 🗓 planificado |
+
+## Seguridad y privacidad
+
+- Repo agnóstico: sin emails, cuentas, empresas ni secretos. CI lo verifica (`agnostic` + gitleaks).
+- Perfil y reglas personales viven en `~/.config/forja/` y nunca se suben.
+- Secretos con 1Password (`op run`); `forja wt` nunca copia `.env` reales.
+- Ver [SECURITY.md](SECURITY.md).
+
+## Contribuir
+
+Lee [CONTRIBUTING.md](CONTRIBUTING.md) y el [Código de Conducta](CODE_OF_CONDUCT.md). La especificación completa está en [`docs/SPEC.md`](docs/SPEC.md).
+
+## Licencia
+
+[MIT](LICENSE)
