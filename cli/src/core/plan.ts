@@ -28,6 +28,8 @@ export interface ModuleHooks {
   plan?(ctx: ModuleCtx): Promise<Action[]>;
   apply?(ctx: ModuleCtx): Promise<void>;
   check?(ctx: ModuleCtx): Promise<CheckResult[]>;
+  /** `forja apply <m> --revert`: deshace lo que hizo apply (sin desinstalar paquetes). */
+  revert?(ctx: ModuleCtx): Promise<void>;
 }
 
 export interface Action {
