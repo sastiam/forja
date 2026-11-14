@@ -30,3 +30,10 @@ test("changedOnDisk: solo la primera columna de chezmoi status", () => {
     "/h/.config/zed/keymap.json",
   ]);
 });
+
+test("self update: versiones nuevas del CHANGELOG", async () => {
+  const { newReleases } = await import("../src/commands/self.ts");
+  const before = "## [Unreleased]\n## [0.1.0] - x\n";
+  const after = "## [Unreleased]\n## [0.3.0] - z\n## [0.2.0] - y\n## [0.1.0] - x\n";
+  assert.deepEqual(newReleases(before, after), ["0.3.0", "0.2.0"]);
+});

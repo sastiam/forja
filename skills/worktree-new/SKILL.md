@@ -24,6 +24,10 @@ Esta skill **no contiene lógica**: solo llama a la CLI `forja`.
    op run --env-file=.env.tpl -- pnpm dev
    ```
 
+## Worktrees nativos de Claude Code
+- Si el usuario arranca con `claude --worktree` (o pides un worktree aislado), el hook `WorktreeCreate` de forja lo crea con `forja wt new … --agent claude`. Así queda fuera del repo (ADR 0005), con firma de agente y registrado en `forja wt ls`. No uses `git worktree add` ni `.claude/worktrees`.
+- Para un loop largo sobre changes de OpenSpec, usa la skill `night-run` (`forja wt night`), no un worktree a mano.
+
 ## Reglas
 - Nunca copies ni crees `.env` reales; forja ya los excluye. Usa `.env.tpl` con referencias `op://`.
 - Si `forja wt new` falla, muestra el error tal cual y no improvises con `git worktree`.

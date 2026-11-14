@@ -1,28 +1,39 @@
 ---
 name: night-run
-description: "Prepara y lanza una tarea de agente nocturna. Úsala con 'déjalo trabajando esta noche'."
-status: draft
+description: "Prepara y lanza un loop de desarrollo autónomo con openspec-cascade (forja wt night), por ejemplo durante la noche con la tapa cerrada. Úsala con 'déjalo trabajando esta noche', 'ejecuta estos changes de OpenSpec' o 'lanza el looper'."
+status: complete
 ---
 
-# night-run (borrador, v0.3.0)
+# night-run
 
-> status: draft — `forja wt night` llega en v0.3.0. Mientras tanto, este es el flujo manual.
+Esta skill **no contiene lógica**: explica y lanza `forja wt night`, que envuelve [openspec-cascade](https://github.com/sastiam/openspec-cascade).
 
-Ayuda a escribir el archivo de prompt (objetivo, criterios de terminado, `.agent-done`) y a lanzar el loop sin que se pare por permisos. La skill no contiene lógica: explica cuándo usar cada comando.
+## Qué hace `forja wt night`
+1. **Comprobaciones:**
+   - `openspec-cascade` instalado (`forja apply looper`).
+   - Cada change existe en `openspec/changes/<nombre>/tasks.md`.
+   - Corriente conectada (o `--allow-battery`).
+2. **Worktree de agente:** rama `agent/night-…`, con la firma ssh de agentes. Si ya existe, lo reutiliza.
+3. **`sandbox-check`** en el worktree: git, escritura, firma y red de cada `--host`.
+4. **Modo tapa** (`forja awake`): el Mac no duerme al cerrar la tapa. Se quita al terminar, con Ctrl-C o si la batería baja del 20 % sin cargador.
+5. **openspec-cascade** con `--repo <worktree> --changes … --engine …`: una sesión por tarea, el arnés verifica y hace los commits. Logs en `~/.local/state/forja/logs/night/`.
+6. **Notificación** por ntfy al terminar o al fallar. **Nunca hace push.**
 
-## Antes de lanzar (fuera del sandbox)
+## Pasos
+1. Comprueba que los changes están listos: `openspec list` en el repo y que cada `tasks.md` tenga sus `Verify:`. Si faltan, ayuda a escribirlos antes de lanzar.
+2. Instala las dependencias del proyecto en el repo principal (`pnpm install`): el loop no debe necesitar la red de paquetes.
+3. Previsualiza el plan:
+   ```sh
+   forja wt night --changes a,b --dry-run
+   ```
+4. Lanza en una terminal que quede abierta (Ghostty), no dentro de esta sesión:
+   ```sh
+   forja wt night --changes a,b [--engine claude|opencode|antigravity] [--full-gate]
+   ```
+   Usa `--full-gate` en changes de dependencias o toolchain.
+5. Por la mañana: `forja wt ls`, revisa la rama `agent/night-…` y las tareas humanas que openspec-cascade listó al final. Luego `forja wt integrate` (skill `worktree-integrate`) y PR.
 
-1. `forja wt new <rama> --agent claude --print-path`: crea el worktree. Hazlo aquí porque `git worktree add` no puede escribir en `.git/worktrees` desde el sandbox.
-2. Instala las dependencias del proyecto (por ejemplo `pnpm install`) para que el loop no necesite la red de paquetes.
-3. `forja doctor`: confirma que la clave de firma de agentes está en verde (permisos 600, menos de 90 días, FileVault).
-
-## Comprobación previa (dentro del sandbox)
-
-4. Desde el worktree y dentro del mismo sandbox del loop: `forja sandbox-check --host github.com` (añade un `--host` por cada dominio que la tarea vaya a usar).
-5. Si sale con ✖, no lances el loop. Cada fallo trae el arreglo: un dominio para `sandbox.network.allowedDomains`, un archivo para `sandbox.filesystem.allowRead`, o mover un paso al lanzador. Pon los permisos de la tarea en la configuración del proyecto, no en los ajustes globales.
-
-## Durante el loop
-
-- Si un permiso se deniega, no reintentes: escribe el bloqueo en `.agent-blocked` y avisa (`ntfy`).
-- Empuja con `git push origin HEAD` (sin `-u`: el sandbox protege `.git/config`).
-- Nunca empujes a `main`: trabaja en la rama `agent/…` y abre un PR.
+## Reglas
+- No lances el loop si alguna comprobación falla: cada fallo trae su arreglo.
+- Con la tapa cerrada, el Mac debe estar sobre una superficie ventilada, nunca en una mochila.
+- Si el loop murió y `forja awake status` sale «huérfano», ejecuta `forja awake off`.

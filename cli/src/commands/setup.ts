@@ -1,10 +1,12 @@
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
+import { claudeAvailable, runClaudeInteractive, skillPrompt } from "../core/claude.ts";
 import { log } from "../core/log.ts";
 import { profilePath, repoRoot } from "../core/paths.ts";
 import { loadProfile, profileToToml, validateProfile } from "../core/profile.ts";
 import { ask, isInteractive } from "../core/prompt.ts";
+import { createRunner } from "../core/runners/shell.ts";
 import { stringify } from "../core/toml.ts";
 import { applyCommand } from "./apply.ts";
 import { doctorCommand } from "./doctor.ts";
@@ -58,10 +60,25 @@ export async function setupCommand(argv: string[]): Promise<number> {
     },
   });
   if (!(await loadProfile(profilePath()))) {
-    if (!values["no-claude"])
-      log.warn(
-        "El onboarding con Claude (skill forja-onboarding) llega en v0.2.0; uso el cuestionario de terminal.",
+    if (!values["no-claude"] && isInteractive() && (await claudeAvailable(createRunner(true)))) {
+      log.step(
+        "Onboarding con Claude Code (skill forja-onboarding). Cierra la sesión al terminar.",
       );
+      runClaudeInteractive(
+        skillPrompt(
+          "forja-onboarding",
+          `Crea mi perfil de forja en ${profilePath()} y los archivos de ~/.config/forja/local/. No ejecutes forja apply.`,
+        ),
+        repoRoot(),
+      );
+      if (!(await loadProfile(profilePath())))
+        log.warn(
+          "No se creó el perfil en la sesión de Claude; sigo con el cuestionario de terminal.",
+        );
+    } else if (!values["no-claude"])
+      log.info("Claude Code no disponible o sin TTY: uso el cuestionario de terminal.");
+  }
+  if (!(await loadProfile(profilePath()))) {
     const profile = await questionnaire(values);
     await mkdir(dirname(profilePath()), { recursive: true });
     await writeFile(profilePath(), stringify(profileToToml(profile)), { mode: 0o600 });

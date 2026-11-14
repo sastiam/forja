@@ -21,6 +21,8 @@ Esta skill **no contiene lógica**: solo llama a la CLI `forja`.
    Muestra lo que se eliminaría y **pide confirmación**.
 4. Tras el "sí", ejecuta el mismo comando sin `--dry-run`.
 
+5. Para una rama que va por detrás de main, ofrece la skill `worktree-integrate`. Para los worktrees `night`, revisa también `forja awake status`: si el loop terminó, el modo tapa debe estar inactivo.
+
 ## Reglas
 - Nunca uses `--force` sin que el usuario lo pida explícitamente para ese worktree.
 - `forja wt rm` rechaza worktrees con cambios sin commit o sin push: respeta ese rechazo y explícalo.
