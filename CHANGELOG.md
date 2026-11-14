@@ -7,10 +7,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 ### Added
 - `forja sandbox-check [--host h]…`: comprobación previa de un loop (git, escritura, firma de agentes y red) con el arreglo sugerido para cada fallo (ADR 0009).
 - Firma ssh de agentes: campo `[signing] agent_key` del perfil, `wt new --agent` la activa por worktree y `doctor` comprueba la clave (ADR 0008).
-- Sandbox de Claude Code por host (ADR 0010): `sandbox.network.allowedDomains` y `sandbox.filesystem.allowRead` de `~/.claude/settings.json` salen de `hosts/<host>.toml` `[claude]`, del perfil `[claude]` y de los módulos activos (identidad de git). `forja apply` ya no los borra.
+- `doctor`/`drift` (módulo `agents`): `opencode --version` y `hermes --version` deben responder; aviso si `opencode` es la copia del instalador oficial (`~/.opencode/bin`) en vez de la de brew. Los checks de módulo admiten `warn` (se muestran con `!` y no cambian el código de salida de doctor).
 - `forja report [-o archivo.md]`: exporta el estado de la máquina (módulos y diagnóstico) a Markdown.
 
 ### Changed
+- CI listo para activar (`docs/pending-workflows/README.md`): `ci.yml` con un check agregado `ci` para la protección de `main`, `release.yml` y auto-merge de Dependabot para subidas patch/minor. CodeQL sigue inactivo.
+- Dependabot: `@types/node` no sube de major (sigue a `engines`).
 - `containers`: Colima + Docker CLI sustituyen a OrbStack como runtime por defecto (ADR 0007); el check acepta ambos contextos.
 
 ### Fixed
