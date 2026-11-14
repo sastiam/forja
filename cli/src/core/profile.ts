@@ -17,6 +17,8 @@ export interface Profile {
   profiles: { work?: WorkProfile; personal?: { code_dir?: string } };
   notify: { ntfy_topic_file?: string };
   signing: { agent_key?: string };
+  /** Extras personales del sandbox de Claude Code; se suman a los del host. */
+  claude: { allowed_domains: string[]; allow_read: string[] };
   secrets: { provider: "1password" | "none" };
 }
 
@@ -54,6 +56,7 @@ export function validateProfile(raw: TomlTable): Profile {
   const personal = table(profiles.personal, "profiles.personal");
   const secrets = table(raw.secrets, "secrets");
   const signing = table(raw.signing, "signing");
+  const claude = table(raw.claude, "claude");
   const provider = str(secrets.provider, "secrets.provider") ?? "none";
   if (provider !== "1password" && provider !== "none")
     throw new ProfileError('secrets.provider: "1password" o "none"');
@@ -71,6 +74,10 @@ export function validateProfile(raw: TomlTable): Profile {
       ntfy_topic_file: str(table(raw.notify, "notify").ntfy_topic_file, "notify.ntfy_topic_file"),
     },
     signing: { agent_key: str(signing.agent_key, "signing.agent_key") },
+    claude: {
+      allowed_domains: strList(claude.allowed_domains, "claude.allowed_domains"),
+      allow_read: strList(claude.allow_read, "claude.allow_read"),
+    },
     secrets: { provider },
   };
   if (Object.keys(work).length) {
@@ -119,6 +126,10 @@ export function profileToToml(p: Profile): TomlTable {
   if (Object.keys(profiles).length) out.profiles = profiles;
   if (p.notify.ntfy_topic_file) out.notify = { ntfy_topic_file: p.notify.ntfy_topic_file };
   if (p.signing.agent_key) out.signing = { agent_key: p.signing.agent_key };
+  const claude: TomlTable = {};
+  if (p.claude.allowed_domains.length) claude.allowed_domains = p.claude.allowed_domains;
+  if (p.claude.allow_read.length) claude.allow_read = p.claude.allow_read;
+  if (Object.keys(claude).length) out.claude = claude;
   out.secrets = { provider: p.secrets.provider };
   return out;
 }

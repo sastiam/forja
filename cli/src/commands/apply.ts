@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { parseArgs } from "node:util";
+import { claudeSandbox } from "../core/claude-sandbox.ts";
 import { load } from "../core/context.ts";
 import { log, out } from "../core/log.ts";
 import { chezmoiConfigPath } from "../core/paths.ts";
@@ -29,6 +30,7 @@ export async function writeChezmoiConfig(ctx: Ctx): Promise<void> {
     email: p.identity.email,
     work_enabled: p.profiles.work?.enabled === true,
     secrets_provider: p.secrets.provider,
+    claude_sandbox: { ...claudeSandbox(ctx.host, p, ctx.enabled) },
   };
   await ctx.runner.writeFile(
     chezmoiConfigPath(),

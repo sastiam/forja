@@ -3,3 +3,8 @@ status = "planned"
 os = "linux"
 arch = "arm64"
 modules = []
+
+# Dominios que el sandbox de Claude Code deja salir en todas las máquinas de este tipo.
+# Los personales (empresa, registries privados) van en profile.toml → [claude].
+[claude]
+allowed_domains = ["github.com", "api.github.com"]

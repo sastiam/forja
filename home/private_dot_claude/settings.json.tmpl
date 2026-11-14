@@ -8,7 +8,15 @@
     ],
     "allow": ["Bash(pnpm *)", "Bash(forja *)", "Bash(git status)", "Bash(git diff*)", "Bash(git commit*)"]
   },
-  "sandbox": { "enabled": true, "failIfUnavailable": true, "allowUnsandboxedCommands": false },
+{{- /* Dominios y lecturas: hosts/<host>.toml [claude] + perfil [claude] + módulos activos (forja apply → chezmoi.toml). */}}
+{{- $sb := get . "claude_sandbox" | default dict }}
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
+    "network": { "allowedDomains": {{ get $sb "allowed_domains" | default list | toJson }} },
+    "filesystem": { "allowRead": {{ get $sb "allow_read" | default list | toJson }} }
+  },
   "hooks": {
     "Notification": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/notify.sh" }] }],
     "Stop": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/notify.sh done" }] }]{{ if has "worktrees" .modules }},

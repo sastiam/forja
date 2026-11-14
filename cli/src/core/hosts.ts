@@ -9,6 +9,8 @@ export interface Host {
   os: string;
   arch: string;
   modules: string[];
+  /** Ajustes de Claude Code comunes a todas las máquinas de este tipo. */
+  claude: { allowed_domains: string[] };
 }
 
 export async function loadHost(root: string, name: string): Promise<Host> {
@@ -20,18 +22,24 @@ export async function loadHost(root: string, name: string): Promise<Host> {
   }
   const t = parse(text);
   const list = t.modules;
+  const claude = (t.claude ?? {}) as { allowed_domains?: unknown };
   return {
     name: String(t.name ?? name),
     status: t.status === "planned" ? "planned" : "supported",
     os: String(t.os ?? "darwin"),
     arch: String(t.arch ?? "arm64"),
     modules: Array.isArray(list) ? list.map(String) : [],
+    claude: {
+      allowed_domains: Array.isArray(claude.allowed_domains)
+        ? claude.allowed_domains.map(String)
+        : [],
+    },
   };
 }
 
 /** Módulos del host + extra del perfil − skip del perfil. */
 export function enabledModuleNames(
-  host: Host,
+  host: Pick<Host, "modules">,
   profile: Pick<Profile, "modules_extra" | "modules_skip">,
 ): string[] {
   const set = new Set([...host.modules, ...profile.modules_extra]);
