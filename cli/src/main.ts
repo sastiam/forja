@@ -6,6 +6,7 @@ import { notYet } from "./commands/later.ts";
 import { moduleCommand } from "./commands/module.ts";
 import { planCommand } from "./commands/plan.ts";
 import { reportCommand } from "./commands/report.ts";
+import { sandboxCheckCommand } from "./commands/sandbox-check.ts";
 import { setupCommand } from "./commands/setup.ts";
 import { versionCommand } from "./commands/version.ts";
 import { log, out } from "./core/log.ts";
@@ -20,6 +21,7 @@ const HELP = `forja — provisionamiento de estaciones de desarrollo
   forja doctor [--json]                Diagnóstico de módulos y salud de la máquina
   forja module ls | info <módulo>
   forja wt new|ls|rm|prune|init-project …   Worktrees (ver: forja wt --help)
+  forja sandbox-check [--host h]… [--json]  Comprobación previa de un loop (ejecutar dentro del sandbox)
   forja report [-o archivo.md]         Estado de la máquina en Markdown (p. ej. para Obsidian)
   forja backlog add "<texto>" [--module m] | ls
   forja version
@@ -37,6 +39,7 @@ const commands: Record<string, (argv: string[]) => Promise<number>> = {
   wt: wtCommand,
   backlog: backlogCommand,
   report: reportCommand,
+  "sandbox-check": sandboxCheckCommand,
   version: versionCommand,
   capture: async () => notYet("capture", "v0.2.0"),
   self: async () => notYet("self update", "v0.3.0"),
