@@ -1,0 +1,12 @@
+// Gestionado por forja (módulo editor).
+[
+  {
+    "context": "Workspace",
+    "bindings": {
+      "cmd-alt-t": ["task::Spawn", { "task_name": "pnpm test" }],
+      "cmd-alt-y": ["task::Spawn", { "task_name": "pnpm typecheck" }],
+      "cmd-alt-w": ["task::Spawn", { "task_name": "forja wt ls" }],
+      "cmd-alt-i": ["task::Spawn", { "task_name": "forja wt integrate (rama actual)" }]
+    }
+  }
+]

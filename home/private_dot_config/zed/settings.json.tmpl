@@ -1,18 +1,36 @@
-// Gestionado por forja (módulo editor). tsgo desactivado: ver BACKLOG.md.
+// Gestionado por forja (módulo editor). Cambios locales: forja capture (o edita la plantilla).
+// tsgo desactivado: ver BACKLOG.md. Memoria de tsserver según la RAM (forja apply → chezmoi.toml).
 {
+  "telemetry": { "diagnostics": false, "metrics": false },
+  "theme": { "mode": "system", "light": "One Light", "dark": "One Dark" },
+  "format_on_save": "on",
+  "show_whitespaces": "selection",
+  "diagnostics": { "inline": { "enabled": true } },
+  "git": { "inline_blame": { "enabled": true, "delay_ms": 600 } },
   "languages": {
-    "TypeScript": { "language_servers": ["vtsls", "biome", "!typescript-language-server", "!typescript-ls", "..."], "formatter": { "language_server": { "name": "biome" } } },
-    "TSX": { "language_servers": ["vtsls", "biome", "!typescript-language-server", "!typescript-ls", "..."], "formatter": { "language_server": { "name": "biome" } } },
-    "JavaScript": { "language_servers": ["vtsls", "biome", "!typescript-language-server", "!typescript-ls", "..."], "formatter": { "language_server": { "name": "biome" } } }
+    "TypeScript": { "language_servers": ["vtsls", "biome", "!typescript-language-server", "!typescript-ls", "!eslint", "..."], "formatter": { "language_server": { "name": "biome" } } },
+    "TSX": { "language_servers": ["vtsls", "biome", "!typescript-language-server", "!typescript-ls", "!eslint", "..."], "formatter": { "language_server": { "name": "biome" } } },
+    "JavaScript": { "language_servers": ["vtsls", "biome", "!typescript-language-server", "!typescript-ls", "!eslint", "..."], "formatter": { "language_server": { "name": "biome" } } },
+    "JSON": { "language_servers": ["biome", "..."], "formatter": { "language_server": { "name": "biome" } } }
   },
   "lsp": {
     "vtsls": {
       "settings": {
-        "typescript": { "tsserver": { "maxTsServerMemory": 4096 } },
-        "javascript": { "tsserver": { "maxTsServerMemory": 4096 } }
+        "typescript": { "tsserver": { "maxTsServerMemory": {{ get . "zed_ts_memory_mb" | default 4096 }} } },
+        "javascript": { "tsserver": { "maxTsServerMemory": {{ get . "zed_ts_memory_mb" | default 4096 }} } }
       }
-    }
+    },
+    // Biome solo arranca en proyectos con biome.json: menos procesos en el resto. VERIFICAR la clave en la extensión de Biome.
+    "biome": { "settings": { "require_config_file": true } }
   },
-  "format_on_save": "on",
-  "file_scan_exclusions": ["**/.git", "**/node_modules", "**/.floci-data", "**/cdk.out", "**/target", "**/.claude/worktrees"]
+  // Agentes por ACP en el panel de agentes. Claude Code viene integrado en Zed; OpenCode se declara aquí.
+  // VERIFICAR: `opencode acp` en OpenCode 2.x.
+  "agent_servers": {
+    "OpenCode": { "command": "opencode", "args": ["acp"] }
+  },
+  // Menos ficheros indexados y vigilados: artefactos, cachés y los symlinks de pnpm.
+  "file_scan_exclusions": [
+    "**/.git", "**/node_modules", "**/.pnpm-store", "**/.turbo", "**/.next", "**/.nuxt", "**/.output",
+    "**/dist", "**/coverage", "**/.floci-data", "**/cdk.out", "**/target", "**/.claude/worktrees", "**/.DS_Store"
+  ]
 }
