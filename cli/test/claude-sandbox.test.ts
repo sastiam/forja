@@ -48,3 +48,13 @@ test("la plantilla de settings.json lee claude_sandbox con valores por defecto",
   );
   assert.match(tmpl, /"allowRead": \{\{ get \$sb "allow_read" \| default list \| toJson \}\}/);
 });
+
+test("memoria de tsserver en Zed: un octavo de la RAM entre 3 y 8 GB", async () => {
+  const { zedTsMemoryMb } = await import("../src/commands/apply.ts");
+  const gb = 1024 ** 3;
+  assert.equal(zedTsMemoryMb(36 * gb), 4608);
+  assert.equal(zedTsMemoryMb(8 * gb), 3072);
+  assert.equal(zedTsMemoryMb(128 * gb), 8192);
+  const tmpl = readFileSync(join(root, "home/private_dot_config/zed/settings.json.tmpl"), "utf8");
+  assert.match(tmpl, /"maxTsServerMemory": \{\{ get \. "zed_ts_memory_mb" \| default 4096 \}\}/);
+});

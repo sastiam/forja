@@ -1,5 +1,7 @@
 import { applyCommand } from "./commands/apply.ts";
+import { awakeCommand } from "./commands/awake.ts";
 import { backlogCommand } from "./commands/backlog.ts";
+import { captureCommand } from "./commands/capture.ts";
 import { doctorCommand } from "./commands/doctor.ts";
 import { driftCommand } from "./commands/drift.ts";
 import { notYet } from "./commands/later.ts";
@@ -18,10 +20,12 @@ const HELP = `forja — provisionamiento de estaciones de desarrollo
   forja plan [módulo…] [--json]        Muestra qué cambiaría, sin tocar nada
   forja apply [módulo…] [--yes] [--dry-run]
   forja drift [--json]                 Detecta desvíos (sale con 2 si los hay)
+  forja capture [módulo] [--yes] [--json]  Pasa al repo paquetes y archivos cambiados en la máquina
   forja doctor [--json]                Diagnóstico de módulos y salud de la máquina
   forja module ls | info <módulo>
   forja wt new|ls|rm|prune|init-project …   Worktrees (ver: forja wt --help)
   forja sandbox-check [--host h]… [--json]  Comprobación previa de un loop (ejecutar dentro del sandbox)
+  forja awake on|off|status            No dormir al cerrar la tapa (loops largos; ver --help)
   forja report [-o archivo.md]         Estado de la máquina en Markdown (p. ej. para Obsidian)
   forja backlog add "<texto>" [--module m] | ls
   forja version
@@ -39,9 +43,10 @@ const commands: Record<string, (argv: string[]) => Promise<number>> = {
   wt: wtCommand,
   backlog: backlogCommand,
   report: reportCommand,
+  awake: awakeCommand,
   "sandbox-check": sandboxCheckCommand,
   version: versionCommand,
-  capture: async () => notYet("capture", "v0.2.0"),
+  capture: captureCommand,
   self: async () => notYet("self update", "v0.3.0"),
 };
 

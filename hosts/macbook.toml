@@ -3,7 +3,7 @@ status = "supported"
 os = "darwin"
 arch = "arm64"
 # macos-aggressive existe pero no se incluye por defecto.
-modules = ["core", "shell", "git", "runtimes", "containers", "editor", "terminal", "browsers", "agents", "worktrees", "security", "macos-base"]
+modules = ["core", "shell", "git", "runtimes", "containers", "editor", "terminal", "browsers", "agents", "worktrees", "security", "macos-base", "looper"]
 
 # Dominios que el sandbox de Claude Code deja salir en todas las máquinas de este tipo.
 # Los personales (empresa, registries privados) van en profile.toml → [claude].
