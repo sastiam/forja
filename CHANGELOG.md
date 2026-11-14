@@ -10,6 +10,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - `forja report [-o archivo.md]`: exporta el estado de la máquina (módulos y diagnóstico) a Markdown.
 
 ### Changed
+- CI listo para activar (`docs/pending-workflows/README.md`): `ci.yml` con un check agregado `ci` para la protección de `main`, `release.yml` y auto-merge de Dependabot para subidas patch/minor. CodeQL sigue inactivo.
+- Dependabot: `@types/node` no sube de major (sigue a `engines`).
 - `containers`: Colima + Docker CLI sustituyen a OrbStack como runtime por defecto (ADR 0007); el check acepta ambos contextos.
 
 ### Fixed
