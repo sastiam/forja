@@ -1,0 +1,11 @@
+name = "looper"
+summary = "openspec-cascade (ref fijado) para wt night"
+os = ["darwin", "linux"]
+depends = ["runtimes", "agents", "worktrees"]
+targets = []
+risk = "low"
+requires_sudo = false
+optional = true
+
+[checks]
+commands = ["bun --version"]

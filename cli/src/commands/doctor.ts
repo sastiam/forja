@@ -1,9 +1,11 @@
 import { existsSync } from "node:fs";
 import { parseArgs } from "node:util";
+import { claudeAvailable, runClaudeInteractive, skillPrompt } from "../core/claude.ts";
 import { load } from "../core/context.ts";
 import { log, out, outJson } from "../core/log.ts";
 import { expandHome } from "../core/paths.ts";
 import { loadHooks, type ModuleCtx, osName } from "../core/plan.ts";
+import { isInteractive } from "../core/prompt.ts";
 import { createRunner, type Runner } from "../core/runners/shell.ts";
 import { signingFindings } from "../core/signing.ts";
 import { loadWorktrees } from "../core/state.ts";
@@ -111,6 +113,27 @@ export async function doctorCommand(argv: string[]): Promise<number> {
     const icon = { ok: "✔", warn: "!", fail: "✖", skip: "–" } as const;
     for (const x of findings) out(`${icon[x.status]} ${x.name}${x.detail ? ` — ${x.detail}` : ""}`);
   }
-  if (values.fix) log.warn("doctor --fix (diagnóstico con Claude) llega en v0.2.0.");
+  if (values.fix) {
+    const runner = createRunner(true);
+    if (!isInteractive() || !(await claudeAvailable(runner))) {
+      log.error("doctor --fix necesita Claude Code y una terminal interactiva.");
+      return 1;
+    }
+    const relevant = findings.filter((x) => x.status === "warn" || x.status === "fail");
+    if (!relevant.length) {
+      log.ok("Nada que arreglar.");
+      return 0;
+    }
+    log.step(
+      "Diagnóstico con Claude Code (skill mac-doctor): cada corrección se confirma en la sesión.",
+    );
+    return runClaudeInteractive(
+      skillPrompt(
+        "mac-doctor",
+        "Prioriza estos hallazgos de forja doctor y propón correcciones reversibles, una a una.",
+        JSON.stringify(relevant, null, 2),
+      ),
+    );
+  }
   return failed ? 1 : 0;
 }

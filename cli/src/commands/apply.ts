@@ -1,8 +1,11 @@
+import { readFile } from "node:fs/promises";
+import { totalmem } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { claudeSandbox } from "../core/claude-sandbox.ts";
 import { load } from "../core/context.ts";
 import { log, out } from "../core/log.ts";
+import type { Module } from "../core/modules.ts";
 import { chezmoiConfigPath } from "../core/paths.ts";
 import {
   type Ctx,
@@ -20,6 +23,15 @@ import { saveLastApply } from "../core/state.ts";
 import { stringify, type TomlTable } from "../core/toml.ts";
 import { renderPlan } from "./plan.ts";
 
+/**
+ * Memoria de tsserver en Zed: un octavo de la RAM, entre 3 y 8 GB. Con varios
+ * worktrees abiertos hay un tsserver por ventana, así que no conviene subir más.
+ */
+export function zedTsMemoryMb(memBytes: number): number {
+  const mb = Math.round(memBytes / 1024 ** 2 / 8);
+  return Math.min(8192, Math.max(3072, mb));
+}
+
 /** Escribe ~/.config/chezmoi/chezmoi.toml derivado del perfil (datos personales: solo en la máquina). */
 export async function writeChezmoiConfig(ctx: Ctx): Promise<void> {
   const p = ctx.profile;
@@ -31,12 +43,41 @@ export async function writeChezmoiConfig(ctx: Ctx): Promise<void> {
     work_enabled: p.profiles.work?.enabled === true,
     secrets_provider: p.secrets.provider,
     claude_sandbox: { ...claudeSandbox(ctx.host, p, ctx.enabled) },
+    zed_ts_memory_mb: zedTsMemoryMb(totalmem()),
   };
   await ctx.runner.writeFile(
     chezmoiConfigPath(),
     stringify({ sourceDir: chezmoiSource(ctx.root), data }),
     0o600,
   );
+}
+
+/** `--revert` exige nombrar los módulos: nunca revierte «todo lo habilitado». */
+async function revertModules(names: string[], dryRun: boolean, yes: boolean): Promise<number> {
+  if (!names.length) {
+    log.error("uso: forja apply <módulo…> --revert");
+    return 1;
+  }
+  const { ctx, all } = await load({ dryRun, names });
+  for (const name of names) {
+    const m = all.get(name) as Module;
+    const hooks = await loadHooks(m);
+    if (!hooks.revert) {
+      log.info(`${name}: sin revert automático; pasos manuales:`);
+      try {
+        out(await readFile(join(m.dir, "revert.md"), "utf8"));
+      } catch {
+        out("  (sin revert.md)");
+      }
+      continue;
+    }
+    if (!dryRun && !yes && !(isInteractive() && (await confirm(`¿Revertir ${name}?`)))) return 3;
+    log.step(`revert ${name}`);
+    await hooks.revert({ ...ctx, module: m });
+    log.ok(`${name} revertido`);
+  }
+  if (dryRun) for (const s of ctx.runner.skipped) log.info(`  · ${s}`);
+  return 0;
 }
 
 export async function applyCommand(argv: string[]): Promise<number> {
@@ -50,11 +91,8 @@ export async function applyCommand(argv: string[]): Promise<number> {
       revert: { type: "boolean" },
     },
   });
-  if (values.revert) {
-    log.error("--revert llega en v0.3.0 (macos-aggressive). Ver modules/<m>/revert.md.");
-    return 1;
-  }
   const dryRun = values["dry-run"] === true;
+  if (values.revert) return revertModules(positionals, dryRun, values.yes === true);
   const { ctx, all, order } = await load({ dryRun, names: positionals });
 
   if (order.includes("macos-aggressive")) {

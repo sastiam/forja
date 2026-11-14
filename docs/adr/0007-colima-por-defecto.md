@@ -20,3 +20,7 @@ El módulo `containers` instala Colima, Docker CLI y docker-compose. Se arranca 
 ## Plan B
 
 Descomentar `cask "orbstack"` en `modules/containers/Brewfile`, quitar Colima y usar `docker context use orbstack`.
+
+## Actualización (v0.2.0): OrbStack fuera
+
+Se decide no mantener OrbStack en paralelo y cerrar el benchmark del backlog. El check solo acepta el contexto `colima`, y `doctor` avisa si `/Applications/OrbStack.app` sigue instalado. `forja apply containers` arranca Colima con un tamaño calculado según la máquina (la mitad de los núcleos y un cuarto de la RAM, entre 4 y 24 GB). El plan B sigue disponible, pero hay que volver a añadir `orbstack` al check.

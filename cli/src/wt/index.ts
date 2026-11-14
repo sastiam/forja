@@ -1,8 +1,9 @@
-import { notYet } from "../commands/later.ts";
 import { log, out } from "../core/log.ts";
 import { wtInitProject } from "./init-project.ts";
+import { wtIntegrate } from "./integrate.ts";
 import { wtLs } from "./ls.ts";
 import { wtNew } from "./new.ts";
+import { wtNight } from "./night.ts";
 import { wtPrune } from "./prune.ts";
 import { wtRm } from "./rm.ts";
 
@@ -12,8 +13,9 @@ const HELP = `forja wt — worktrees
   ls [--json]
   rm <rama|ruta> [--force]
   prune [--merged] [--older-than 14d] [--dry-run]
+  integrate <rama> [--onto origin/main] [--strategy rebase|merge] [--no-fetch] [--json]
   init-project
-  integrate (v0.2.0) · night (v0.3.0)`;
+  night --changes a,b [--engine claude|opencode|antigravity] [--branch b] [--full-gate] [--dry-run]`;
 
 export async function wtCommand(argv: string[]): Promise<number> {
   const [sub, ...rest] = argv;
@@ -29,9 +31,9 @@ export async function wtCommand(argv: string[]): Promise<number> {
     case "init-project":
       return wtInitProject();
     case "integrate":
-      return notYet("wt integrate", "v0.2.0");
+      return wtIntegrate(rest);
     case "night":
-      return notYet("wt night", "v0.3.0");
+      return wtNight(rest);
     case undefined:
     case "--help":
     case "help":

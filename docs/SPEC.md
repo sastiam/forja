@@ -385,7 +385,7 @@ enabled = true                      # exporta AWS_PROFILE=floci en .env.worktree
 | `wt rm <rama\|ruta> [--force]` | Rechaza si hay cambios sin commit o sin push (salvo `--force`). Corre `teardown` → `git worktree remove` → `prune` → limpia state. |
 | `wt prune [--merged] [--older-than 14d] [--dry-run]` | Limpia worktrees fusionados o viejos y entradas huérfanas en state. |
 | `wt integrate <rama> [--onto main] [--strategy rebase\|merge]` | `fetch` → rebase o merge con mergiraf y rerere activos → si quedan conflictos, abre `smerge mergetool` y espera → corre `[checks].integrate` → reporta. Nunca hace push. |
-| `wt night <rama> --prompt <archivo> [--agent claude] [--max-iter 20] [--timeout 45m]` | Verificaciones previas: corriente conectada, sandbox de Claude disponible (`failIfUnavailable`), worktree `agent/*` sin `.env` reales y tópico ntfy configurado. Luego crea/reutiliza el worktree, mantiene la Mac despierta con `caffeinate -dimsu -w <pid>` y corre `claude -p` en bucle con límite de iteraciones y back-off ante fallos. Logs en `~/.local/state/forja/logs/`. Avisa al terminar o al fallar. Se detiene si existe `.agent-done`. |
+| `wt night --changes a,b [--engine claude\|opencode\|antigravity] [--branch b] [--full-gate] [--allow-battery] [--host h]… [--dry-run]` | **(ADR 0011)** Comprobaciones: openspec-cascade instalado (módulo `looper`), changes existentes en `openspec/changes/`, corriente conectada. Crea o reutiliza el worktree `agent/night-…` con firma de agente, corre `sandbox-check` y lanza openspec-cascade con el modo tapa activo (`forja awake`), que se quita al terminar, con señales o con batería < 20 % sin cargador. Logs en `~/.local/state/forja/logs/night/`. Notifica por ntfy. Nunca hace push. |
 | `wt init-project` | Copia `templates/project` al repo actual sin sobrescribir archivos existentes. |
 
 **Puertos:** `port_base + (cksum(slug) % 100)`. Es determinista: el mismo worktree siempre recibe el mismo puerto. Debe tener test unitario.
@@ -505,8 +505,8 @@ Además, en Settings: activar *Private vulnerability reporting*, crear un rulese
 | Versión | Alcance |
 |---|---|
 | **v0.1.0** | Bootstrap, CLI (`setup --no-claude`, `plan`, `apply`, `drift`, `doctor` sin `--fix`, `module`, `backlog`, `version`), módulos `core, shell, git, runtimes, containers, editor, terminal, browsers, agents, security, macos-base`, `wt new/ls/rm/prune`, todos los archivos de GitHub y CI completo |
-| **v0.2.0** | `setup` con Claude (`forja-onboarding`), `doctor --fix`, `capture`, `wt integrate`, skills `worktree-*`, `mac-doctor`, `forja-maintain` |
-| **v0.3.0** | `wt night` + skill `night-run`, `project-flow`, `macos-aggressive` con revert, `self update` |
+| **v0.2.0** | `setup` con Claude (`forja-onboarding`), `doctor --fix`, `capture`, `wt integrate`, skills `worktree-*`, `mac-doctor`, `forja-maintain`, containers solo con Colima, gitleaks en pre-commit |
+| **v0.3.0** | `wt night` sobre openspec-cascade (módulo `looper`) + skill `night-run`, `forja awake`, perfiles de energía, `macos-aggressive` con revert, Zed optimizado, `project-flow`, `self update` |
 | **v0.4.0** | Host Fedora (paquetes dnf, sin módulos macOS) |
 | **v0.5.0** | Host Raspberry Pi (arm64 Linux, módulos mínimos) |
 

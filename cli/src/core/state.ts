@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { stateDir } from "./paths.ts";
 
@@ -59,3 +59,16 @@ export const loadLastApply = (): Promise<LastApply | null> =>
 export function logsDir(): string {
   return join(stateDir(), "logs");
 }
+
+/** Modo tapa activo (`forja awake on`). Si queda sin dueño, doctor avisa. */
+export interface AwakeState {
+  since: string;
+  reason: string;
+  /** Proceso que lo pidió (p. ej. `wt night`); sin él vivo, el modo está huérfano. */
+  pid?: number;
+}
+
+const awakeFile = () => join(stateDir(), "awake.json");
+export const loadAwake = (): Promise<AwakeState | null> => readJson(awakeFile(), null);
+export const saveAwake = (v: AwakeState | null): Promise<void> =>
+  v ? writeJson(awakeFile(), v) : rm(awakeFile(), { force: true });

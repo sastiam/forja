@@ -35,17 +35,22 @@ Híbrido: la instalación la hace código determinista (Brewfile por módulo + c
 
 | Comando | Qué hace |
 |---|---|
-| `forja setup [--no-claude]` | Crea el perfil local, luego plan → apply → doctor |
+| `forja setup [--no-claude]` | Crea el perfil local (con Claude, skill `forja-onboarding`), luego plan → apply → doctor |
 | `forja plan [módulo…] [--json]` | Muestra qué cambiaría; no modifica nada |
-| `forja apply [módulo…] [--yes] [--dry-run]` | Aplica módulos resolviendo dependencias |
+| `forja apply [módulo…] [--yes] [--dry-run] [--revert]` | Aplica módulos resolviendo dependencias; `--revert` los deshace |
 | `forja drift [--json]` | Detecta desvíos (sale con código 2) |
-| `forja doctor [--json]` | Diagnóstico de módulos y salud de la máquina |
+| `forja capture [módulo] [--yes] [--json]` | Pasa al repo los paquetes y archivos cambiados en la máquina |
+| `forja doctor [--json] [--fix]` | Diagnóstico de módulos y salud; `--fix` abre Claude con `mac-doctor` |
 | `forja module ls / info <m>` | Módulos, dependencias y cómo revertir |
-| `forja wt new / ls / rm / prune / init-project` | Worktrees (ver `docs/SPEC.md` §2.6) |
+| `forja wt new / ls / rm / prune / integrate / night / init-project` | Worktrees (ver `docs/SPEC.md` §2.6); `night` lanza openspec-cascade |
+| `forja awake on / off / status` | No dormir al cerrar la tapa mientras corre un loop |
+| `forja sandbox-check [--host h]…` | Comprobación previa de un loop dentro del sandbox |
+| `forja report [-o archivo.md]` | Estado de la máquina en Markdown |
 | `forja backlog add "<texto>" [--module m]` | Anota una mejora en `BACKLOG.md` |
+| `forja self update` | `git pull --ff-only` del clon + `mise install` |
 | `forja version` | Versión, commit, Node y host |
 
-Códigos de salida: `0` ok · `1` error · `2` desvío · `3` requiere confirmación. Pendientes: `capture`, `wt integrate` (v0.2.0), `wt night`, `self update` (v0.3.0).
+Códigos de salida: `0` ok · `1` error · `2` desvío · `3` requiere confirmación.
 
 ## Módulos
 

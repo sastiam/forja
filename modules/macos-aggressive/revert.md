@@ -1,1 +1,1 @@
-Pendiente de v0.3.0 (`forja apply macos-aggressive --revert`). Manual: `pmset -a disablesleep 0`.
+`forja apply macos-aggressive --revert`: quita el LaunchDaemon de maxfiles. El developer mode se desactiva a mano en Ajustes → Privacidad y seguridad → Herramientas para desarrolladores.
