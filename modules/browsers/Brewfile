@@ -1,2 +1,3 @@
-cask "google-chrome"
-cask "dia"   # VERIFICAR: nombre exacto del cask de Dia (brew search dia)
+# adopt: si la app ya está en /Applications (instalada a mano), brew la adopta en vez de fallar.
+cask "google-chrome", args: { adopt: true }
+cask "thebrowsercompany-dia", args: { adopt: true }   # VERIFICAR: brew info --cask thebrowsercompany-dia
