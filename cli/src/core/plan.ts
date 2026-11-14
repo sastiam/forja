@@ -40,6 +40,8 @@ export interface CheckResult {
   name: string;
   ok: boolean;
   detail?: string;
+  /** Con `ok: false`, doctor lo muestra como aviso (!) en vez de fallo (✖) y no cambia el código de salida. */
+  warn?: boolean;
 }
 
 export interface ModulePlan {

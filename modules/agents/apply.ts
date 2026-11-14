@@ -1,11 +1,12 @@
 import { existsSync } from "node:fs";
 import { readdir } from "node:fs/promises";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { log } from "../../cli/src/core/log.ts";
 import { expandHome } from "../../cli/src/core/paths.ts";
 import type { Action, CheckResult, ModuleCtx } from "../../cli/src/core/plan.ts";
 import { confirm, isInteractive } from "../../cli/src/core/prompt.ts";
-import { commandExists } from "../../cli/src/core/runners/shell.ts";
+import { commandExists, type Runner } from "../../cli/src/core/runners/shell.ts";
 
 // VERIFICAR: ruta global de skills de OpenCode (¿~/.config/opencode/skills?) y si OpenCode
 // ya lee ~/.claude/skills; en ese caso NO enlazar dos veces. Ver BACKLOG.md.
@@ -74,6 +75,50 @@ export async function apply(ctx: ModuleCtx): Promise<void> {
   }
 }
 
+const firstLine = (s: string): string => s.trim().split("\n")[0] ?? "";
+
+/** `<cmd> --version` responde. Detecta binarios instalados pero rotos (p. ej. Hermes). */
+async function versionCheck(runner: Runner, cmd: string): Promise<CheckResult> {
+  const r = await runner.query(cmd, ["--version"], { timeoutMs: 15000 });
+  return r.code === 0
+    ? { name: `${cmd} --version`, ok: true, detail: firstLine(r.stdout) || undefined }
+    : {
+        name: `${cmd} --version`,
+        ok: false,
+        detail: firstLine(r.stderr || r.stdout) || `sale con ${r.code}`,
+      };
+}
+
+/**
+ * OpenCode se instala con brew. Su instalador oficial deja el binario en
+ * ~/.opencode/bin y lo antepone al PATH en ~/.zshrc, tapando el de brew y
+ * quedando fuera de drift/report.
+ */
+async function opencodeChecks(runner: Runner): Promise<CheckResult[]> {
+  if (!(await commandExists(runner, "opencode")))
+    return [{ name: "opencode", ok: false, detail: "no instalado (forja apply agents)" }];
+  const path = (await runner.query("sh", ["-c", "command -v opencode"])).stdout.trim();
+  const unmanaged = path.startsWith(join(homedir(), ".opencode"));
+  return [
+    {
+      name: "opencode instalado con brew",
+      ok: !unmanaged,
+      warn: true,
+      detail: unmanaged
+        ? `${path} es del instalador oficial: quita ~/.opencode/bin del PATH en ~/.zshrc y borra ~/.opencode`
+        : undefined,
+    },
+    await versionCheck(runner, "opencode"),
+  ];
+}
+
+/** Hermes es opcional: si no está instalado es un aviso; si está y no responde, un fallo. */
+async function hermesChecks(runner: Runner): Promise<CheckResult[]> {
+  if (!(await commandExists(runner, "hermes")))
+    return [{ name: "hermes", ok: false, warn: true, detail: "no instalado (opcional)" }];
+  return [await versionCheck(runner, "hermes")];
+}
+
 export async function check(ctx: ModuleCtx): Promise<CheckResult[]> {
   const missing = (await skillDirs(ctx.root)).filter(
     (s) => !existsSync(join(expandHome(CLAUDE_SKILLS), s)),
@@ -84,5 +129,7 @@ export async function check(ctx: ModuleCtx): Promise<CheckResult[]> {
       ok: missing.length === 0,
       detail: missing.length ? `faltan ${missing.join(", ")}` : undefined,
     },
+    ...(await opencodeChecks(ctx.runner)),
+    ...(await hermesChecks(ctx.runner)),
   ];
 }
