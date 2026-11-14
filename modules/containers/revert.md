@@ -1,1 +1,1 @@
-`brew uninstall --cask orbstack`, `brew uninstall floci awscli aws-cdk` y retira el perfil `[floci]` de `~/.aws/config`.
+`colima stop && colima delete`, `brew uninstall colima docker docker-compose floci awscli aws-cdk` y retira el perfil `[floci]` de `~/.aws/config`. Si usabas OrbStack: `brew uninstall --cask orbstack`.

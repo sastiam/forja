@@ -35,6 +35,7 @@ export async function systemChecks(runner: Runner, platform: string): Promise<Fi
       "~/Library/pnpm/store",
       "~/.local/share/pnpm",
       "~/.orbstack",
+      "~/.colima",
     ]
       .map(expandHome)
       .filter(existsSync);
@@ -58,12 +59,7 @@ export async function systemChecks(runner: Runner, platform: string): Promise<Fi
   return f;
 }
 
-export async function doctorCommand(argv: string[]): Promise<number> {
-  const { values } = parseArgs({
-    args: argv,
-    allowPositionals: true,
-    options: { json: { type: "boolean" }, fix: { type: "boolean" } },
-  });
+export async function collectFindings(): Promise<Finding[]> {
   const findings: Finding[] = [];
   let loaded: Awaited<ReturnType<typeof load>> | null = null;
   try {
@@ -96,6 +92,16 @@ export async function doctorCommand(argv: string[]): Promise<number> {
   findings.push(
     ...(await systemChecks(loaded?.ctx.runner ?? createRunner(true), process.platform)),
   );
+  return findings;
+}
+
+export async function doctorCommand(argv: string[]): Promise<number> {
+  const { values } = parseArgs({
+    args: argv,
+    allowPositionals: true,
+    options: { json: { type: "boolean" }, fix: { type: "boolean" } },
+  });
+  const findings = await collectFindings();
   const failed = findings.some((x) => x.status === "fail");
   if (values.json) outJson({ ok: !failed, findings });
   else {
