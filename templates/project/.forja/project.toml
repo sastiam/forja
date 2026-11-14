@@ -1,0 +1,12 @@
+# Configuración opcional de forja para este proyecto (agnóstica: sin ella forja no asume nada).
+[worktree]
+copy = [".env.tpl"]                 # además de lo que diga .worktreeinclude
+setup = ["pnpm install --frozen-lockfile --prefer-offline"]
+teardown = []
+port_base = 3000                    # puerto = port_base + cksum(slug) % 100
+
+[checks]
+integrate = ["pnpm -s typecheck", "pnpm -s test"]
+
+[floci]
+enabled = false                     # true exporta AWS_PROFILE=floci en .env.worktree

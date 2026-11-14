@@ -1,0 +1,11 @@
+# AWS local con Floci. Fija la versión de la imagen (nunca latest).
+services:
+  floci:
+    image: floci/floci:0.0.0   # VERIFICAR: sustituir por la última versión estable publicada
+    ports:
+      - "4566:4566"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock   # necesario para Lambda/RDS/ECS
+      - ./.floci-data:/app/data
+    environment:
+      FLOCI_STORAGE_MODE: hybrid
