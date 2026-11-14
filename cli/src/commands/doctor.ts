@@ -87,7 +87,7 @@ export async function collectFindings(): Promise<Finding[]> {
         [])
         findings.push({
           name: `${name}: ${c.name}`,
-          status: c.ok ? "ok" : "fail",
+          status: c.ok ? "ok" : c.warn ? "warn" : "fail",
           detail: c.detail,
         });
     }
