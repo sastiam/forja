@@ -1,0 +1,5 @@
+name = "fedora"
+status = "planned"
+os = "linux"
+arch = "x86_64"
+modules = []

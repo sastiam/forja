@@ -1,0 +1,18 @@
+schema = 1
+host = "macbook"
+modules_extra = []
+modules_skip = ["macos-aggressive"]
+
+[identity]
+name = "Ada Example"
+email = "ada@example.invalid"
+
+[profiles.work]
+enabled = true
+code_dir = "~/code/work"
+
+[profiles.personal]
+code_dir = "~/code/personal"
+
+[secrets]
+provider = "none"

@@ -1,0 +1,11 @@
+name = "containers"
+summary = "OrbStack + Floci + AWS CLI + CDK (AWS local)"
+os = ["darwin"]
+depends = ["core"]
+targets = ["~/.aws/config", "~/.aws/credentials"]
+risk = "medium"
+requires_sudo = false
+optional = false
+
+[checks]
+commands = ["docker context show", "floci --version"]

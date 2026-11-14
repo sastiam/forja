@@ -1,0 +1,4 @@
+brew "coreutils"
+brew "jq"
+brew "gh"
+cask "1password-cli"

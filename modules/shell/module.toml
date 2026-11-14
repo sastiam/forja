@@ -1,0 +1,11 @@
+name = "shell"
+summary = "zsh con mise, starship, zoxide, fzf y utilidades modernas"
+os = ["darwin", "linux"]
+depends = ["core"]
+targets = ["~/.zshrc"]
+risk = "low"
+requires_sudo = false
+optional = false
+
+[checks]
+commands = ["starship --version", "zoxide --version", "fzf --version"]

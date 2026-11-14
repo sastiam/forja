@@ -1,0 +1,11 @@
+name = "runtimes"
+summary = "mise global: Node, pnpm, uv, Python y Rust"
+os = ["darwin", "linux"]
+depends = ["core"]
+targets = ["~/.config/mise"]
+risk = "low"
+requires_sudo = false
+optional = false
+
+[checks]
+commands = ["mise --version"]

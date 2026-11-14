@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test (${{ matrix.os }}, node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, node: "26" }
+          - { os: macos-latest, node: "26" }
+          - { os: ubuntu-latest, node: "22" } # mínimo soportado (engines)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+      - run: npm ci
+      - run: npm run lint
+      - name: shellcheck
+        run: shellcheck bootstrap.sh bin/forja scripts/*.sh
+
+  plan:
+    name: plan (macos-latest)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+      - name: bootstrap en dry-run
+        run: sh bootstrap.sh --dry-run --no-claude
+        env:
+          FORJA_SKIP_OS_CHECK: "1" # el runner puede ir por detrás de macOS 26
+      - name: forja plan --json con perfil de fixture
+        run: |
+          export FORJA_CONFIG_DIR="$RUNNER_TEMP/forja-config"
+          export FORJA_STATE_DIR="$RUNNER_TEMP/forja-state"
+          mkdir -p "$FORJA_CONFIG_DIR"
+          cp cli/test/fixtures/profile.fixture.toml "$FORJA_CONFIG_DIR/profile.toml"
+          node cli/src/main.ts plan --json | tee "$RUNNER_TEMP/plan.json"
+          node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); if(!p.modules.length) process.exit(1)' "$RUNNER_TEMP/plan.json"
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  agnostic:
+    name: agnostic (sin datos personales)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sh scripts/check-agnostic.sh

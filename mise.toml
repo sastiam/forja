@@ -1,0 +1,3 @@
+# Fija la versión de Node con la que corre la CLI de forja.
+[tools]
+node = "26"

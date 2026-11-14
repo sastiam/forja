@@ -1,0 +1,6 @@
+name = "macbook"
+status = "supported"
+os = "darwin"
+arch = "arm64"
+# macos-aggressive existe pero no se incluye por defecto.
+modules = ["core", "shell", "git", "runtimes", "containers", "editor", "terminal", "browsers", "agents", "worktrees", "security", "macos-base"]

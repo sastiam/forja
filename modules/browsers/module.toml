@@ -1,0 +1,11 @@
+name = "browsers"
+summary = "Chrome y Dia (solo instala, sin flags no documentados)"
+os = ["darwin"]
+depends = ["core"]
+targets = []
+risk = "low"
+requires_sudo = false
+optional = true
+
+[checks]
+commands = []

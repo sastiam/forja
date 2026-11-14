@@ -1,0 +1,6 @@
+# Gestionado por forja (módulo terminal)
+macos-option-as-alt = true
+window-save-state = always
+shell-integration = zsh
+# VERIFICAR: nombre y valores de esta clave con `ghostty +show-config --default --docs`
+notify-on-command-finish = unfocused

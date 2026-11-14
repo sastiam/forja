@@ -1,0 +1,3 @@
+# Archivos (rutas literales) que se copian a cada worktree nuevo.
+# Nunca se copian .env ni .env.* (salvo .env.tpl): usa referencias op://.
+.env.tpl

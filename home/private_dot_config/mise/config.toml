@@ -1,0 +1,9 @@
+[tools]
+node = "26"          # Active LTS desde el 28-oct-2026
+pnpm = "latest"
+python = "3.13"
+uv = "latest"
+rust = "stable"      # uso ocasional; sin target-dir compartido, sin sccache por defecto
+
+[settings]
+idiomatic_version_file_enable_tools = ["node"]   # respeta .nvmrc / .node-version

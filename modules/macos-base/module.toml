@@ -1,0 +1,11 @@
+name = "macos-base"
+summary = "Capa conservadora y reversible de ajustes de macOS"
+os = ["darwin"]
+depends = ["core"]
+targets = []
+risk = "medium"
+requires_sudo = true
+optional = false
+
+[checks]
+commands = []

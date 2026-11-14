@@ -1,0 +1,9 @@
+[profile floci]
+region = us-east-1
+endpoint_url = http://localhost:4566
+output = json
+{{- $local := joinPath .chezmoi.homeDir ".config" "forja" "local" "aws.local.config" }}
+{{- if stat $local }}
+
+{{ include $local }}
+{{- end }}

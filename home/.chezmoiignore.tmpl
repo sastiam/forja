@@ -1,0 +1,27 @@
+{{- /* Ignora las rutas de los módulos no habilitados en este host (datos de chezmoi.toml → .modules). */ -}}
+{{ if not (has "shell" .modules) }}
+.zshrc
+{{ end }}
+{{ if not (has "git" .modules) }}
+.config/git
+.config/lazygit
+{{ end }}
+{{ if not (has "runtimes" .modules) }}
+.config/mise
+{{ end }}
+{{ if not (has "containers" .modules) }}
+.aws
+{{ end }}
+{{ if not (has "editor" .modules) }}
+.config/zed
+{{ end }}
+{{ if not (has "terminal" .modules) }}
+.config/ghostty
+{{ end }}
+{{ if not (has "agents" .modules) }}
+.claude
+.config/opencode
+{{ end }}
+{{ if and (has "agents" .modules) (not (has "worktrees" .modules)) }}
+.claude/hooks/worktree-*.sh
+{{ end }}

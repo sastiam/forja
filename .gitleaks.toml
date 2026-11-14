@@ -1,0 +1,14 @@
+title = "forja gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Valores ficticios de emulador y fixtures"
+regexes = [
+  '''aws_access_key_id\s*=\s*test''',
+  '''aws_secret_access_key\s*=\s*test''',
+]
+paths = [
+  '''cli/test/fixtures/.*''',
+]

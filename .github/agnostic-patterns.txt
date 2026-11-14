@@ -1,0 +1,4 @@
+# Patrones prohibidos en el repo (regex ERE, uno por línea; # comenta).
+# Añade aquí nombres de empresas o dominios internos EN TU FORK, nunca en el repo público.
+AKIA[0-9A-Z]{16}
+-----BEGIN [A-Z ]*PRIVATE KEY-----

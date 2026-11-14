@@ -1,0 +1,12 @@
+node_modules/
+*.log
+.DS_Store
+# Datos personales: nunca al repo
+*.local.*
+profile.toml
+.env
+.env.*
+!.env.tpl
+.env.worktree
+.agent-done
+coverage/
