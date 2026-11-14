@@ -12,6 +12,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 ### Changed
 - `containers`: Colima + Docker CLI sustituyen a OrbStack como runtime por defecto (ADR 0007); el check acepta ambos contextos.
 
+### Fixed
+- `drift`, `plan` y `report` marcaban como pendientes paquetes instalados: `brew bundle check` se ejecuta ahora con `--no-upgrade`, `HOMEBREW_NO_AUTO_UPDATE=1` y `HOMEBREW_NO_ANALYTICS=1`, sin red (dentro del sandbox no llega a analytics.brew.sh).
+
 ## [0.1.0] - 2026-11-14
 
 ### Added
