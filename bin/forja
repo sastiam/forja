@@ -1,0 +1,12 @@
+#!/bin/sh
+# Shim: resuelve symlinks y ejecuta la CLI de TypeScript con Node (sin build).
+set -eu
+src=$0
+while [ -L "$src" ]; do
+  dir=$(cd "$(dirname "$src")" && pwd)
+  src=$(readlink "$src")
+  case $src in /*) ;; *) src=$dir/$src ;; esac
+done
+FORJA_HOME=${FORJA_HOME:-$(cd "$(dirname "$src")/.." && pwd)}
+export FORJA_HOME
+exec node "$FORJA_HOME/cli/src/main.ts" "$@"
