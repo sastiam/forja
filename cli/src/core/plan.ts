@@ -89,6 +89,12 @@ export async function planModule(ctx: Ctx, m: Module): Promise<ModulePlan> {
   const mctx: ModuleCtx = { ...ctx, module: m };
   if (m.hasBrewfile && ctx.platform === "darwin") {
     const file = join(m.dir, "Brewfile");
+    for (const tap of await brew.untrustedTaps(ctx.runner, file))
+      actions.push({
+        kind: "step",
+        description: `confiar en el tap de terceros ${tap} (brew trust --tap ${tap})`,
+        pending: true,
+      });
     const s = await brew.bundleCheck(ctx.runner, file);
     actions.push({
       kind: "brew",

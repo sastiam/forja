@@ -154,7 +154,13 @@ export async function applyCommand(argv: string[]): Promise<number> {
     const mctx: ModuleCtx = { ...ctx, module: m };
     try {
       if (m.hasBrewfile && ctx.platform === "darwin") {
-        const r = await brew.bundleApply(ctx.runner, join(m.dir, "Brewfile"));
+        const file = join(m.dir, "Brewfile");
+        // El plan confirmado ya listaba estos taps como «confiar en el tap…».
+        for (const tap of await brew.untrustedTaps(ctx.runner, file)) {
+          const t = await brew.trustTap(ctx.runner, tap);
+          if (t.code !== 0) throw new Error(`brew trust --tap ${tap} falló`);
+        }
+        const r = await brew.bundleApply(ctx.runner, file);
         if (r.code !== 0) throw new Error(`brew bundle falló (${r.code})`);
       }
       if (m.targets.length) {
