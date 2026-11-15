@@ -24,7 +24,7 @@ const HELP = `forja — provisionamiento de estaciones de desarrollo
   forja doctor [--json] [--fix]        Diagnóstico de módulos y salud (--fix: con Claude, skill mac-doctor)
   forja module ls | info <módulo>
   forja wt new|ls|rm|prune|init-project …   Worktrees (ver: forja wt --help)
-  forja sandbox-check [--host h]… [--json]  Comprobación previa de un loop (ejecutar dentro del sandbox)
+  forja sandbox-check [--host h]… [--json] [--inside-loop]  Comprobación previa de un loop (ejecutar dentro del sandbox)
   forja awake on|off|status            No dormir al cerrar la tapa (loops largos; ver --help)
   forja report [-o archivo.md]         Estado de la máquina en Markdown (p. ej. para Obsidian)
   forja backlog add "<texto>" [--module m] | ls

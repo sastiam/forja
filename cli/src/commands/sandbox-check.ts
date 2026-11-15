@@ -1,5 +1,5 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { out, outJson } from "../core/log.ts";
@@ -19,6 +19,33 @@ export interface CheckOpts {
   cwd: string;
   hosts: string[];
   keyPath?: string;
+  /**
+   * Dentro de un loop de openspec-cascade (`wt night`): el arnés hace los
+   * commits fuera del sandbox, así que se omiten firma y escritura en el
+   * git-dir, y se exige que el sandbox esté activo de verdad.
+   */
+  insideLoop?: boolean;
+  /** Carpeta que el sandbox no debe dejar escribir (por defecto $HOME). */
+  outsideDir?: string;
+}
+
+/** Dentro del sandbox no se puede escribir en $HOME; si se puede, el loop correría sin protección. */
+export function checkSandboxActive(
+  dir: string,
+  write: (dir: string) => void = probeWrite,
+): SandboxFinding {
+  const name = "sandbox activo (no escribe fuera del worktree)";
+  try {
+    write(dir);
+  } catch {
+    return { name, status: "ok" };
+  }
+  return {
+    name,
+    status: "fail",
+    detail: `se pudo escribir en ${dir}`,
+    fix: "el settings de la noche no activó el sandbox: revisa sandbox.enabled y que openspec-cascade reciba --settings",
+  };
 }
 
 /** Comprueba que se puede escribir en `dir` creando y borrando un archivo. */
@@ -64,8 +91,16 @@ export async function runChecks(runner: Runner, o: CheckOpts): Promise<SandboxFi
         },
   );
 
+  if (o.insideLoop) f.push(checkSandboxActive(o.outsideDir ?? homedir()));
+
   const gitDir = await runner.query("git", ["rev-parse", "--absolute-git-dir"], { cwd: o.cwd });
-  if (gitDir.code === 0 && gitDir.stdout.trim())
+  if (o.insideLoop)
+    f.push({
+      name: "git: se puede commitear (escritura en el git-dir)",
+      status: "skip",
+      detail: "commitea el arnés, fuera del sandbox",
+    });
+  else if (gitDir.code === 0 && gitDir.stdout.trim())
     f.push(
       checkWritable(
         "git: se puede commitear (escritura en el git-dir)",
@@ -84,7 +119,13 @@ export async function runChecks(runner: Runner, o: CheckOpts): Promise<SandboxFi
   );
   f.push(checkWritable("escritura en el directorio temporal", tmpdir(), "usa $TMPDIR del sandbox"));
 
-  if (o.keyPath) {
+  if (o.insideLoop)
+    f.push({
+      name: "firma de agentes: la clave firma",
+      status: "skip",
+      detail: "firma el arnés, fuera del sandbox",
+    });
+  else if (o.keyPath) {
     const key = expandHome(o.keyPath);
     const r = await runner.query("ssh-keygen", ["-Y", "sign", "-n", "git", "-f", key], {
       input: "forja\n",
@@ -130,14 +171,20 @@ export async function sandboxCheckCommand(argv: string[]): Promise<number> {
   const { values } = parseArgs({
     args: argv,
     allowPositionals: false,
-    options: { host: { type: "string", multiple: true }, json: { type: "boolean" } },
+    options: {
+      host: { type: "string", multiple: true },
+      json: { type: "boolean" },
+      "inside-loop": { type: "boolean" },
+    },
   });
-  const profile = await loadProfile(profilePath()).catch(() => null);
+  const insideLoop = values["inside-loop"] === true;
+  const profile = insideLoop ? null : await loadProfile(profilePath()).catch(() => null);
   const hosts = values.host?.length ? values.host : ["github.com"];
   const findings = await runChecks(createRunner(true), {
     cwd: process.cwd(),
     hosts,
     keyPath: profile?.signing.agent_key,
+    insideLoop,
   });
   const failed = findings.some((x) => x.status === "fail");
   if (values.json) outJson({ ok: !failed, findings });
