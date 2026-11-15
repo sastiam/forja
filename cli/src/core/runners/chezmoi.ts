@@ -1,4 +1,5 @@
-import { join } from "node:path";
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
 import type { Runner } from "./shell.ts";
 import { commandExists } from "./shell.ts";
 
@@ -41,6 +42,16 @@ export async function conflicts(
   return r.code === 0 ? modifiedOutside(r.stdout, home) : [];
 }
 
+/**
+ * chezmoi no aplica un archivo cuya carpeta aún no existe (`stat ~/.aws: no such
+ * file or directory` en una máquina sin ~/.aws). `--parent-dirs` la crea con los
+ * permisos del repo, pero también reaplica los de carpetas que ya existen (p. ej.
+ * ~/.config a 700), así que solo se usa cuando falta alguna.
+ */
+export function needsParentDirs(targets: string[]): boolean {
+  return targets.some((t) => !existsSync(dirname(t)));
+}
+
 /** `force`: sobrescribe sin preguntar lo cambiado fuera de chezmoi (`forja apply --force`). */
 export async function apply(
   runner: Runner,
@@ -48,7 +59,13 @@ export async function apply(
   targets: string[],
   opts: { force?: boolean } = {},
 ) {
-  const args = [...base(source), "apply", ...(opts.force ? ["--force"] : []), ...targets];
+  const args = [
+    ...base(source),
+    "apply",
+    ...(opts.force ? ["--force"] : []),
+    ...(needsParentDirs(targets) ? ["--parent-dirs"] : []),
+    ...targets,
+  ];
   return runner.exec("chezmoi", args, { stream: true });
 }
 
