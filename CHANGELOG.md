@@ -4,6 +4,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Unreleased]
 
+### Added
+- `containers`: en Apple Silicon, `plan` y `doctor` comprueban Rosetta 2 y `apply` la instala antes de arrancar Colima (y la reinicia si ya corría); sin ella, Colima arranca sin `--vz-rosetta`.
+
 ## [0.2.0] - 2026-11-14
 
 ### Added
