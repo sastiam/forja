@@ -4,7 +4,7 @@ os = ["darwin"]
 depends = ["core"]
 targets = ["~/.aws/config", "~/.aws/credentials"]
 risk = "medium"
-requires_sudo = false
+requires_sudo = true
 optional = false
 
 [checks]
