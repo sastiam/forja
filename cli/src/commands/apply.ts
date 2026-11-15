@@ -46,6 +46,8 @@ export async function writeChezmoiConfig(ctx: Ctx): Promise<void> {
     claude_sandbox: { ...claudeSandbox(ctx.host, p, ctx.enabled) },
     /** Vacío = la plantilla no escribe "model" y Claude Code usa su modelo por defecto. */
     claude_model: p.claude.model ?? "",
+    /** Vacío = la plantilla no escribe "theme" (lo que guarda /config). */
+    claude_theme: p.claude.theme ?? "",
     zed_ts_memory_mb: zedTsMemoryMb(totalmem()),
   };
   await ctx.runner.writeFile(

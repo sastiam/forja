@@ -30,3 +30,5 @@ allowed_domains = ["registry.example.invalid"]
 allow_read = ["~/.npmrc"]
 # Modelo por defecto de Claude Code (settings.json "model"); lo que guarda /model.
 # model = "opus"
+# Tema de Claude Code (settings.json "theme"); lo que guarda /config.
+# theme = "dark"
