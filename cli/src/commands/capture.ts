@@ -3,8 +3,10 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { load } from "../core/context.ts";
+import { GIT_GLOBAL_CONFIG, moveCommands, personalGitKeys } from "../core/git-personal.ts";
 import { log, out, outJson } from "../core/log.ts";
 import type { Module } from "../core/modules.ts";
+import { expandHome } from "../core/paths.ts";
 import { chezmoiSource, moduleTargets } from "../core/plan.ts";
 import { ask, confirm, isInteractive } from "../core/prompt.ts";
 import { BREW_OFFLINE_ENV } from "../core/runners/brew.ts";
@@ -109,13 +111,36 @@ export async function captureCommand(argv: string[]): Promise<number> {
   }
   const filtered = filterCapturable(files, homedir());
   files = filtered.allowed;
+  // La config global de git con identidad o firma no se sube al repo: esas claves van en git.local.gitconfig.
+  const gitGlobal = expandHome(GIT_GLOBAL_CONFIG);
+  let gitPersonal: string[] = [];
+  if (files.includes(gitGlobal)) {
+    const r = await runner.query("git", ["config", "--file", gitGlobal, "--list"]);
+    const found = personalGitKeys(r.stdout);
+    if (found.length) {
+      files = files.filter((f) => f !== gitGlobal);
+      filtered.rejected.push(gitGlobal);
+      gitPersonal = moveCommands(found);
+    }
+  }
   templates = filterCapturable(templates, homedir()).allowed;
 
   if (values.json) {
-    outJson({ packages: pkgs, files, templates, rejected: filtered.rejected });
+    outJson({
+      packages: pkgs,
+      files,
+      templates,
+      rejected: filtered.rejected,
+      git_personal: gitPersonal,
+    });
     return 0;
   }
+  if (gitPersonal.length) {
+    out(`${GIT_GLOBAL_CONFIG} tiene identidad o firma; muévelas a git.local.gitconfig:`);
+    for (const c of gitPersonal) out(`  ${c}`);
+  }
   if (!pkgs.length && !files.length && !templates.length) {
+    if (gitPersonal.length) return 2;
     out("Nada que capturar: lo instalado y los archivos coinciden con el repo.");
     return 0;
   }
