@@ -23,5 +23,6 @@
     "WorktreeCreate": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/worktree-create.sh" }] }],
     "WorktreeRemove": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/worktree-remove.sh" }] }]{{ end }}
   },
-  "statusLine": { "type": "command", "command": "~/.claude/statusline.sh" }
+  "statusLine": { "type": "command", "command": "~/.claude/statusline.sh" }{{ with get . "claude_model" }},
+  "model": {{ toJson . }}{{ end }}
 }

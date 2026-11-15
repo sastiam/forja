@@ -17,8 +17,11 @@ export interface Profile {
   profiles: { work?: WorkProfile; personal?: { code_dir?: string } };
   notify: { ntfy_topic_file?: string };
   signing: { agent_key?: string };
-  /** Extras personales del sandbox de Claude Code; se suman a los del host. */
-  claude: { allowed_domains: string[]; allow_read: string[] };
+  /**
+   * Claude Code: extras personales del sandbox (se suman a los del host) y el
+   * modelo por defecto que `/model` guarda en settings.json.
+   */
+  claude: { allowed_domains: string[]; allow_read: string[]; model?: string };
   secrets: { provider: "1password" | "none" };
 }
 
@@ -80,6 +83,8 @@ export function validateProfile(raw: TomlTable): Profile {
     },
     secrets: { provider },
   };
+  const model = str(claude.model, "claude.model");
+  if (model) profile.claude.model = model;
   if (Object.keys(work).length) {
     if (work.enabled !== undefined && typeof work.enabled !== "boolean")
       throw new ProfileError("profiles.work.enabled debe ser boolean");
@@ -129,6 +134,7 @@ export function profileToToml(p: Profile): TomlTable {
   const claude: TomlTable = {};
   if (p.claude.allowed_domains.length) claude.allowed_domains = p.claude.allowed_domains;
   if (p.claude.allow_read.length) claude.allow_read = p.claude.allow_read;
+  if (p.claude.model) claude.model = p.claude.model;
   if (Object.keys(claude).length) out.claude = claude;
   out.secrets = { provider: p.secrets.provider };
   return out;

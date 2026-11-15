@@ -43,6 +43,8 @@ export async function writeChezmoiConfig(ctx: Ctx): Promise<void> {
     work_enabled: p.profiles.work?.enabled === true,
     secrets_provider: p.secrets.provider,
     claude_sandbox: { ...claudeSandbox(ctx.host, p, ctx.enabled) },
+    /** Vacío = la plantilla no escribe "model" y Claude Code usa su modelo por defecto. */
+    claude_model: p.claude.model ?? "",
     zed_ts_memory_mb: zedTsMemoryMb(totalmem()),
   };
   await ctx.runner.writeFile(
