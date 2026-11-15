@@ -2,7 +2,11 @@
 
 - Nunca hagas push a `main` ni force-push; trabaja en ramas y abre PR.
 - Usa Conventional Commits con scope de módulo.
+{{ if eq (toString (get . "secrets_provider")) "1password" -}}
 - No leas ni escribas secretos; usa referencias `op://` y `op run`.
+{{ else -}}
+- No leas ni escribas secretos (`.env`, claves, credenciales); si hacen falta, pídelos al usuario.
+{{ end -}}
 - Para worktrees usa `forja wt …` en lugar de `git worktree` directo.
 
 <!-- VERIFICAR: que Claude Code ignore sin error el import cuando el archivo local no existe. -->
