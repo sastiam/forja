@@ -58,17 +58,64 @@ export function segments(command: string): string[] {
     .filter(Boolean);
 }
 
-/** Quita asignaciones `VAR=valor` y envoltorios (`op run --`, `npx`, `pnpm exec`). */
+/**
+ * Prefijos que ejecutan el comando que les sigue. Se quitan en bucle para que
+ * `sudo timeout 30 aws …` se clasifique igual que `aws …`.
+ */
+const WRAPPERS: [RegExp, string][] = [
+  [/^(?:\S+=\S*\s+)+/, ""], // VAR=valor
+  [/^op\s+run\b.*?--\s+/, ""],
+  [/^(?:npx|bunx)(?:\s+-\S*)*\s+/, ""],
+  [/^(?:pnpm|yarn)\s+(?:exec|dlx)\s+/, ""],
+  [/^env(?:\s+(?:-[uCS]\s*\S+|-\S*))*\s+/, ""],
+  [/^(?:sudo|doas)(?:\s+(?:-[ugCDhprtTU]\s*\S+|-\S*))*\s+/, ""],
+  [/^timeout(?:\s+(?:-[sk]\s*\S+|-\S*))*\s+\S+\s+/, ""],
+  [/^nice(?:\s+(?:-n\s*\S+|-\S*))*\s+/, ""],
+  [/^xargs(?:\s+(?:-[IdEnLPs]\s*\S+|-\S*))*\s+/, ""],
+  [/^(?:command|builtin|exec|nohup|time|stdbuf|caffeinate)(?:\s+-\S*)*\s+/, ""],
+  [/^\\/, ""], // \aws (salta alias)
+  [/^(['"])([^'"\s]+)\1(?=\s|$)/, "$2"], // "aws" s3 …
+  [/^(?:[^\s/'"]*\/)+(?=\S)/, ""], // /usr/local/bin/aws, ./node_modules/.bin/cdk
+];
+const MAX_UNWRAP = 16;
+/** Más anidamiento que esto (`bash -c "bash -c …"`) no se analiza: se pregunta. */
+const MAX_NESTING = 4;
+
+/** `bash -c '…'`, `sh -lc "…"`, `eval '…'`: el comando real va en el argumento. */
+const NESTED_SHELL = /^(?:(?:(?:ba|da|z|k)?sh)(?:\s+-\S+)*?\s+-[a-z]*c[a-z]*|eval)\s+(.+)$/s;
+/** `$(…)` y `` `…` `` dentro de cualquier comando. */
+const SUBSTITUTIONS = [/\$\(([^()]*)\)/g, /`([^`]*)`/g];
+
+/** Quita asignaciones `VAR=valor`, envoltorios (`sudo`, `timeout`, `npx`, `op run --`…) y rutas. */
 function bareCommand(segment: string): string {
-  return segment
-    .replace(/^(?:\S+=\S*\s+)+/, "")
-    .replace(/^op\s+run\b.*?--\s+/, "")
-    .replace(/^(?:npx|pnpm\s+(?:exec|dlx)|bunx|env)\s+/, "")
-    .replace(/^(?:\S+=\S*\s+)+/, "");
+  let bare = segment;
+  for (let i = 0; i < MAX_UNWRAP; i++) {
+    const before = bare;
+    for (const [re, to] of WRAPPERS) bare = bare.replace(re, to);
+    if (bare === before) break;
+  }
+  return bare;
 }
 
-function classifySegment(segment: string, sessionProfile: string | undefined): AwsVerdict {
+function unquote(s: string): string {
+  return s.trim().replace(/^\\*['"]|\\*['"]$/g, "");
+}
+
+function stricter(a: AwsVerdict, b: AwsVerdict): AwsVerdict {
+  return LEVEL_ORDER[b.level] > LEVEL_ORDER[a.level] ? b : a;
+}
+
+function classifySegment(
+  segment: string,
+  sessionProfile: string | undefined,
+  depth: number,
+): AwsVerdict {
   const bare = bareCommand(segment);
+  const nested = NESTED_SHELL.exec(bare)?.[1];
+  if (nested !== undefined) {
+    const profile = OTHER_PROFILE.exec(segment)?.[1] ?? sessionProfile;
+    return classifyLine(unquote(nested), profile, depth + 1);
+  }
   const tool = Object.keys(TOOLS).find((t) => new RegExp(`^${t}(?:\\s|$)`).test(bare));
   if (!tool) return { level: "pass" };
   const rules = TOOLS[tool] as { readOnly: RegExp; destructive: RegExp };
@@ -97,11 +144,25 @@ function classifySegment(segment: string, sessionProfile: string | undefined): A
 
 /** Clasifica una línea de Bash: gana el segmento más estricto. */
 export function classifyAws(command: string, sessionProfile?: string): AwsVerdict {
+  return classifyLine(command, sessionProfile, 0);
+}
+
+function classifyLine(
+  command: string,
+  sessionProfile: string | undefined,
+  depth: number,
+): AwsVerdict {
+  if (depth > MAX_NESTING)
+    return {
+      level: "ask",
+      reason: "quality-guard: comando demasiado anidado para comprobar si toca AWS real. ¿Seguro?",
+    };
   let worst: AwsVerdict = { level: "pass" };
-  for (const s of segments(command)) {
-    const v = classifySegment(s, sessionProfile);
-    if (LEVEL_ORDER[v.level] > LEVEL_ORDER[worst.level]) worst = v;
-  }
+  for (const re of SUBSTITUTIONS)
+    for (const [, inner] of command.matchAll(re))
+      worst = stricter(worst, classifyLine(inner ?? "", sessionProfile, depth + 1));
+  for (const s of segments(command))
+    worst = stricter(worst, classifySegment(s, sessionProfile, depth));
   return worst;
 }
 

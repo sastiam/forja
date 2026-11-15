@@ -92,6 +92,27 @@ test("quality-guard: clasifica comandos de AWS", () => {
     ["git status && cdk destroy", undefined, "deny"],
     ["git status", undefined, "pass"],
     ["echo aws is great", undefined, "pass"],
+    // Envoltorios: no deben servir para rodear el guard.
+    ["sudo aws s3 rm s3://b --recursive", undefined, "deny"],
+    ["sudo -u ops -E aws s3 mb s3://b", undefined, "ask"],
+    ["sudo aws s3 ls", undefined, "pass"],
+    ["command aws s3 mb s3://b", undefined, "ask"],
+    ["timeout 30 cdk destroy --all", undefined, "deny"],
+    ["nohup nice -n 10 terraform apply", undefined, "ask"],
+    ["env -i AWS_PROFILE=floci aws s3 mb s3://b", undefined, "pass"],
+    ["ls | xargs -n1 aws s3 rm --recursive", undefined, "deny"],
+    ["/usr/local/bin/aws s3 rm s3://b --recursive", undefined, "deny"],
+    ["./node_modules/.bin/cdk deploy", undefined, "ask"],
+    ["\\aws s3 mb s3://b", undefined, "ask"],
+    ['"aws" s3 mb s3://b', undefined, "ask"],
+    ["bash -c 'aws s3 rm s3://b --recursive'", undefined, "deny"],
+    ['sh -lc "cdk deploy"', undefined, "ask"],
+    ["eval 'cdk destroy'", undefined, "deny"],
+    ["AWS_PROFILE=floci bash -c 'aws s3 mb s3://b'", undefined, "pass"],
+    ["echo $(aws s3 rm s3://b --recursive)", undefined, "deny"],
+    ["echo `cdk destroy`", undefined, "deny"],
+    ['bash -c "bash -c \\"aws s3 rm s3://b --recursive\\""', undefined, "deny"],
+    ["bash -c bash -c bash -c bash -c bash -c bash -c ls", undefined, "ask"],
   ];
   for (const [cmd, profile, level] of cases)
     assert.equal(quality.classifyAws(cmd, profile).level, level, `${cmd} (${profile ?? "-"})`);
