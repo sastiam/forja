@@ -75,6 +75,30 @@ test("settings.json: escribe theme solo si el perfil lo define", {
   assert.equal(onlyTheme.theme, "dark");
 });
 
+function renderClaudeMd(data: string): string {
+  const dir = mkdtempSync(join(tmpdir(), "forja-tmpl-"));
+  const cfg = join(dir, "chezmoi.toml");
+  writeFileSync(cfg, `[data]\n${data}`);
+  const tmpl = readFileSync(join(root, "home/private_dot_claude/CLAUDE.md.tmpl"), "utf8");
+  return execFileSync("chezmoi", ["--config", cfg, "--source", dir, "execute-template"], {
+    input: tmpl,
+    encoding: "utf8",
+  });
+}
+
+test("CLAUDE.md: la regla de op:// solo aparece con secrets.provider = 1password", {
+  skip: !hasChezmoi && "chezmoi no instalado",
+}, () => {
+  const op = renderClaudeMd('secrets_provider = "1password"\n');
+  assert.match(op, /op run/);
+  assert.match(op, /^- Para worktrees usa/m);
+  for (const out of [renderClaudeMd('secrets_provider = "none"\n'), renderClaudeMd("")]) {
+    assert.doesNotMatch(out, /op:\/\/|op run|\{\{/);
+    assert.match(out, /^- No leas ni escribas secretos/m);
+    assert.match(out, /^- Para worktrees usa/m);
+  }
+});
+
 // 2. Archivos cambiados fuera de chezmoi
 
 test("chezmoi status: solo cuenta lo cambiado en el disco que apply sobrescribiría", () => {
