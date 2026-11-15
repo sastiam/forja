@@ -8,6 +8,7 @@ import {
   parseColimaList,
   plan,
   resizePlan,
+  rosetta,
 } from "../../modules/containers/apply.ts";
 import type { ModuleCtx } from "../src/core/plan.ts";
 import { createFakeRunner } from "../src/core/runners/shell.ts";
@@ -135,6 +136,74 @@ test("colimaArgs usa vz, virtiofs y rosetta", () => {
     colimaArgs({ cpu: 7, memoryGb: 9, diskGb: 100 }).join(" "),
     "start --vm-type vz --mount-type virtiofs --vz-rosetta --cpu 7 --memory 9 --disk 100",
   );
+});
+
+/** Apple Silicon con o sin Rosetta 2; Colima parado. */
+function rosettaRunner(installed: boolean) {
+  return createFakeRunner((cmd, args) => {
+    if (cmd === "uname") return { stdout: "arm64\n" };
+    if (cmd === "/usr/bin/arch") return { code: installed ? 0 : 1 };
+    if (cmd === "sysctl") return { stdout: `14\n${48 * 1024 ** 3}\n` };
+    if (cmd === "colima" && args[0] !== "start") return { code: 1 };
+    return undefined;
+  }, false);
+}
+
+test("Rosetta: no aplica fuera de Apple Silicon", async () => {
+  const runner = createFakeRunner((cmd) => (cmd === "uname" ? { stdout: "x86_64\n" } : undefined));
+  assert.equal(await rosetta(runner), "n/a");
+  assert.ok(!runner.calls.some((c) => c.startsWith("/usr/bin/arch")));
+});
+
+test("Rosetta: plan y doctor la piden si falta en Apple Silicon", async () => {
+  const actions = await plan({ runner: rosettaRunner(false) } as unknown as ModuleCtx);
+  const step = actions.find((a) => /Rosetta 2/.test(a.description));
+  assert.equal(step?.pending, true);
+  assert.match(step?.description ?? "", /softwareupdate --install-rosetta --agree-to-license/);
+  const checks = await check({ runner: rosettaRunner(false) } as unknown as ModuleCtx);
+  const r = checks.find((c) => c.name === "Rosetta 2 instalada");
+  assert.equal(r?.warn, true);
+  const ok = await check({ runner: rosettaRunner(true) } as unknown as ModuleCtx);
+  assert.ok(!ok.some((c) => c.name === "Rosetta 2 instalada"));
+});
+
+test("Rosetta: apply la instala antes de arrancar Colima con --vz-rosetta", async () => {
+  const runner = rosettaRunner(false);
+  await apply({ runner } as unknown as ModuleCtx);
+  const install = runner.calls.findIndex((c) => c.startsWith("sudo softwareupdate"));
+  const start = runner.calls.findIndex((c) => c.startsWith("colima start"));
+  assert.ok(install >= 0 && start > install);
+  assert.match(runner.calls[start] ?? "", /--vz-rosetta/);
+});
+
+test("Rosetta: si no se instala, Colima arranca sin --vz-rosetta", async () => {
+  const runner = createFakeRunner((cmd, args) => {
+    if (cmd === "uname") return { stdout: "arm64\n" };
+    if (cmd === "/usr/bin/arch" || (cmd === "sudo" && args[0] === "softwareupdate"))
+      return { code: 1 };
+    if (cmd === "sysctl") return { stdout: `14\n${48 * 1024 ** 3}\n` };
+    if (cmd === "colima" && args[0] !== "start") return { code: 1 };
+    return undefined;
+  }, false);
+  await apply({ runner } as unknown as ModuleCtx);
+  const start = runner.calls.find((c) => c.startsWith("colima start"));
+  assert.ok(start && !start.includes("--vz-rosetta"));
+});
+
+test("Rosetta: recién instalada con Colima en marcha, apply lo reinicia", async () => {
+  let running = true;
+  const runner = createFakeRunner((cmd, args) => {
+    if (cmd === "uname") return { stdout: "arm64\n" };
+    if (cmd === "/usr/bin/arch") return { code: 1 };
+    if (cmd === "sysctl") return { stdout: `14\n${48 * 1024 ** 3}\n` };
+    if (cmd === "colima" && args[0] === "list") return { stdout: `${vmJson(4, 6, 40)}\n` };
+    if (cmd === "colima" && args[0] === "status") return { code: running ? 0 : 1 };
+    if (cmd === "colima" && args[0] === "stop") running = false;
+    return undefined;
+  }, false);
+  await apply({ runner } as unknown as ModuleCtx);
+  assert.ok(runner.calls.includes("colima stop"));
+  assert.ok(runner.calls.some((c) => c.startsWith("colima start") && c.includes("--vz-rosetta")));
 });
 
 test("plan: Colima parado queda pendiente con el tamaño de la máquina", async () => {
