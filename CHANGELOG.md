@@ -30,6 +30,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - `browsers`: casks con `--adopt` (Chrome y Dia ya instalados a mano); el cask de Dia es `thebrowsercompany-dia`.
 
 ### Fixed
+- Primer `apply` de un módulo con un tap de terceros (Homebrew 7 exige `brew trust`): `plan` muestra «confiar en el tap …» y `apply` lo hace antes de `brew bundle`, en vez de fallar a mitad (`containers` con `floci-io/floci`).
+- `chezmoi apply` de archivos cuya carpeta aún no existe (`~/.aws` en una máquina sin AWS CLI configurado) fallaba con `stat … no such file or directory`; ahora se usa `--parent-dirs` solo en ese caso.
 - `apply --yes` sin TTY ya no falla a medias cuando un archivo gestionado se cambió fuera de chezmoi: lo detecta antes de escribir nada, lo lista con qué hacer (`forja capture` o `--force`) y sale con 3. `plan` y `drift` lo señalan. Nueva opción `apply --force`.
 - `settings.json` ya no pierde el modelo que guarda `/model`: el perfil admite `[claude] model` y la plantilla lo escribe solo si está definido.
 - `runtimes` ejecuta `mise install` tras escribir la config (antes una herramienta nueva, como `bun`, quedaba sin instalar) y `plan` lo marca pendiente con `mise ls --missing`.
