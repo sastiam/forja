@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { totalmem } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
+import { settingsData as claudePluginsData } from "../core/claude-plugins.ts";
 import { claudeSandbox } from "../core/claude-sandbox.ts";
 import { load } from "../core/context.ts";
 import { log, out } from "../core/log.ts";
@@ -49,6 +50,8 @@ export async function writeChezmoiConfig(ctx: Ctx): Promise<void> {
     /** Vacío = la plantilla no escribe "theme" (lo que guarda /config). */
     claude_theme: p.claude.theme ?? "",
     zed_ts_memory_mb: zedTsMemoryMb(totalmem()),
+    /** Marketplaces y plugins de Claude Code (settings.json); ADR 0012. */
+    ...claudePluginsData(ctx.root, p.claude.plugins_skip),
   };
   await ctx.runner.writeFile(
     chezmoiConfigPath(),

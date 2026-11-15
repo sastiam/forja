@@ -2,15 +2,81 @@ import { existsSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import {
+  enabledPlugins,
+  installedIds,
+  marketOf,
+  marketplaceArg,
+  marketplaceNames,
+  marketplaces,
+  PLUGINS,
+  unknownSkips,
+} from "../../cli/src/core/claude-plugins.ts";
 import { log } from "../../cli/src/core/log.ts";
 import { expandHome } from "../../cli/src/core/paths.ts";
-import type { Action, CheckResult, ModuleCtx } from "../../cli/src/core/plan.ts";
+import {
+  type Action,
+  type CheckResult,
+  chezmoiSource,
+  type ModuleCtx,
+} from "../../cli/src/core/plan.ts";
 import { confirm, isInteractive } from "../../cli/src/core/prompt.ts";
+import * as chezmoi from "../../cli/src/core/runners/chezmoi.ts";
 import { commandExists, type Runner } from "../../cli/src/core/runners/shell.ts";
 
 // VERIFICAR: ruta global de skills de OpenCode (¿~/.config/opencode/skills?) y si OpenCode
 // ya lee ~/.claude/skills; en ese caso NO enlazar dos veces. Ver BACKLOG.md.
 const CLAUDE_SKILLS = "~/.claude/skills";
+const CLAUDE_SETTINGS = "~/.claude/settings.json";
+
+const pluginsSkip = (ctx: ModuleCtx): string[] => ctx.profile?.claude.plugins_skip ?? [];
+
+/** Plugins activos según el perfil que aún no están instalados (sin claude: todos). */
+async function missingPlugins(ctx: ModuleCtx): Promise<string[]> {
+  const wanted = enabledPlugins(pluginsSkip(ctx));
+  if (!(await commandExists(ctx.runner, "claude"))) return wanted;
+  const r = await ctx.runner.query("claude", ["plugin", "list", "--json"], { timeoutMs: 30000 });
+  const installed = new Set(r.code === 0 ? installedIds(r.stdout) : []);
+  return wanted.filter((id) => !installed.has(id));
+}
+
+/**
+ * settings.json ya declara marketplaces y plugins (chezmoi), pero Claude Code solo los
+ * materializa en una sesión interactiva. Aquí se instalan con la CLI; como `plugin install`
+ * reescribe settings.json con otro formato, después chezmoi lo deja como en el repo.
+ */
+async function installPlugins(ctx: ModuleCtx): Promise<void> {
+  const { runner } = ctx;
+  const missing = await missingPlugins(ctx);
+  if (!missing.length) return;
+  const known = marketplaceNames(
+    (await runner.query("claude", ["plugin", "marketplace", "list", "--json"])).stdout,
+  );
+  const all = marketplaces(ctx.root);
+  for (const name of new Set(missing.map(marketOf))) {
+    const source = all[name];
+    if (!source || known.includes(name)) continue;
+    log.step(`Claude Code: marketplace ${name}`);
+    const r = await runner.exec("claude", [
+      "plugin",
+      "marketplace",
+      "add",
+      marketplaceArg(source),
+      "--scope",
+      "user",
+    ]);
+    if (r.code !== 0) log.warn(`no se pudo añadir el marketplace ${name}: ${r.stderr.trim()}`);
+  }
+  for (const id of missing) {
+    log.step(`Claude Code: plugin ${id}`);
+    const r = await runner.exec("claude", ["plugin", "install", id, "--scope", "user"]);
+    if (r.code !== 0) log.warn(`no se pudo instalar ${id}: ${r.stderr.trim()}`);
+  }
+  const r = await chezmoi.apply(runner, chezmoiSource(ctx.root), [expandHome(CLAUDE_SETTINGS)], {
+    force: true,
+  });
+  if (r.code !== 0) log.warn(`chezmoi no pudo restaurar ${CLAUDE_SETTINGS}: ${r.stderr.trim()}`);
+}
 
 async function skillDirs(root: string): Promise<string[]> {
   return (await readdir(join(root, "skills"), { withFileTypes: true }))
@@ -33,6 +99,12 @@ export async function plan(ctx: ModuleCtx): Promise<Action[]> {
     description: `enlazar skills en ${CLAUDE_SKILLS}${missing.length ? ` (faltan: ${missing.join(", ")})` : ""}`,
     pending: missing.length > 0,
   });
+  const missingP = await missingPlugins(ctx);
+  actions.push({
+    kind: "step",
+    description: `plugins de Claude Code${missingP.length ? ` (faltan: ${missingP.join(", ")})` : ""}`,
+    pending: missingP.length > 0,
+  });
   actions.push({
     kind: "guide",
     description:
@@ -53,6 +125,7 @@ export async function apply(ctx: ModuleCtx): Promise<void> {
   }
   for (const s of await skillDirs(ctx.root))
     await runner.link(join(ctx.root, "skills", s), join(expandHome(CLAUDE_SKILLS), s));
+  await installPlugins(ctx);
 
   if (!(await commandExists(runner, "hermes"))) {
     const script = "/tmp/hermes-install.sh";
@@ -119,6 +192,55 @@ async function hermesChecks(runner: Runner): Promise<CheckResult[]> {
   return [await versionCheck(runner, "hermes")];
 }
 
+/** Plugins de Claude Code instalados, rtk (token-saver) y uv (MCP de aws-core). */
+async function pluginChecks(ctx: ModuleCtx): Promise<CheckResult[]> {
+  const { runner } = ctx;
+  const skip = pluginsSkip(ctx);
+  const results: CheckResult[] = [];
+  const unknown = unknownSkips(skip);
+  if (unknown.length)
+    results.push({
+      name: "[claude] plugins_skip",
+      ok: false,
+      warn: true,
+      detail: `no existen: ${unknown.join(", ")} (ver cli/src/core/claude-plugins.ts)`,
+    });
+  if (await commandExists(runner, "claude")) {
+    const missing = await missingPlugins(ctx);
+    results.push({
+      name: "plugins de Claude Code",
+      ok: missing.length === 0,
+      warn: true,
+      detail: missing.length
+        ? `faltan ${missing.map((id) => `${id} (${PLUGINS[id]})`).join(", ")}: forja apply agents`
+        : undefined,
+    });
+  }
+  const enabled = enabledPlugins(skip);
+  if (enabled.includes("token-saver@forja")) {
+    const r = await runner.query("rtk", ["gain", "--help"], { timeoutMs: 15000 });
+    results.push({
+      name: "rtk (token-saver)",
+      ok: r.code === 0,
+      warn: true,
+      detail:
+        r.code === 0
+          ? undefined
+          : "no responde a `rtk gain`: forja apply agents (si es otro «rtk», p. ej. Rust Type Kit, desinstálalo)",
+    });
+  }
+  if (enabled.includes("aws-core@agent-toolkit-for-aws")) {
+    const uvx = await commandExists(runner, "uvx");
+    results.push({
+      name: "uv (MCP de aws-core)",
+      ok: uvx,
+      warn: true,
+      detail: uvx ? undefined : "falta uvx: forja apply agents",
+    });
+  }
+  return results;
+}
+
 export async function check(ctx: ModuleCtx): Promise<CheckResult[]> {
   const missing = (await skillDirs(ctx.root)).filter(
     (s) => !existsSync(join(expandHome(CLAUDE_SKILLS), s)),
@@ -131,5 +253,6 @@ export async function check(ctx: ModuleCtx): Promise<CheckResult[]> {
     },
     ...(await opencodeChecks(ctx.runner)),
     ...(await hermesChecks(ctx.runner)),
+    ...(await pluginChecks(ctx)),
   ];
 }

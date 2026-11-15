@@ -21,7 +21,14 @@ export interface Profile {
    * Claude Code: extras personales del sandbox (se suman a los del host) y el
    * modelo por defecto que `/model` guarda en settings.json, y el tema que guarda `/config`.
    */
-  claude: { allowed_domains: string[]; allow_read: string[]; model?: string; theme?: string };
+  claude: {
+    allowed_domains: string[];
+    allow_read: string[];
+    model?: string;
+    theme?: string;
+    /** Plugins de Claude Code que forja no activa (`token-saver`, `aws-core`…; ver cli/src/core/claude-plugins.ts). */
+    plugins_skip?: string[];
+  };
   /** Tamaño de la VM de Colima; lo que falte sale de colimaSize() según la máquina. */
   containers: { cpu?: number; memory_gb?: number; disk_gb?: number };
   secrets: { provider: "1password" | "none" };
@@ -102,6 +109,8 @@ export function validateProfile(raw: TomlTable): Profile {
   if (model) profile.claude.model = model;
   const theme = str(claude.theme, "claude.theme");
   if (theme) profile.claude.theme = theme;
+  const pluginsSkip = strList(claude.plugins_skip, "claude.plugins_skip");
+  if (pluginsSkip.length) profile.claude.plugins_skip = pluginsSkip;
   if (Object.keys(work).length) {
     if (work.enabled !== undefined && typeof work.enabled !== "boolean")
       throw new ProfileError("profiles.work.enabled debe ser boolean");
@@ -153,6 +162,7 @@ export function profileToToml(p: Profile): TomlTable {
   if (p.claude.allow_read.length) claude.allow_read = p.claude.allow_read;
   if (p.claude.model) claude.model = p.claude.model;
   if (p.claude.theme) claude.theme = p.claude.theme;
+  if (p.claude.plugins_skip?.length) claude.plugins_skip = p.claude.plugins_skip;
   if (Object.keys(claude).length) out.claude = claude;
   if (Object.keys(p.containers).length) out.containers = { ...p.containers };
   out.secrets = { provider: p.secrets.provider };

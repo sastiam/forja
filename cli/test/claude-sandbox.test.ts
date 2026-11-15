@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { claudeSandbox, GIT_LOCAL_CONFIG } from "../src/core/claude-sandbox.ts";
+import { claudeSandbox, GIT_LOCAL_CONFIG, RTK_DATA_DIR } from "../src/core/claude-sandbox.ts";
 import { loadHost } from "../src/core/hosts.ts";
 import { validateProfile } from "../src/core/profile.ts";
 
@@ -28,7 +28,16 @@ test("el perfil suma dominios y lecturas sin duplicar, en orden estable", () => 
   assert.deepEqual(claudeSandbox(host, profile, ["git"]), {
     allowed_domains: ["github.com", "api.github.com", "npm.example.invalid"],
     allow_read: [GIT_LOCAL_CONFIG, "~/.npmrc"],
+    allow_write: [],
   });
+});
+
+test("con agents, el sandbox deja escribir el historial de rtk según el SO", () => {
+  const darwin = { os: "darwin", claude: { allowed_domains: [] } };
+  const linux = { os: "linux", claude: { allowed_domains: [] } };
+  assert.deepEqual(claudeSandbox(darwin, noExtras, ["agents"]).allow_write, [RTK_DATA_DIR.darwin]);
+  assert.deepEqual(claudeSandbox(linux, noExtras, ["agents"]).allow_write, [RTK_DATA_DIR.linux]);
+  assert.deepEqual(claudeSandbox(darwin, noExtras, ["git"]).allow_write, []);
 });
 
 test("el perfil valida [claude] como listas de strings", () => {

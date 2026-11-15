@@ -4,9 +4,16 @@ import type { Profile } from "./profile.ts";
 /** Identidad de git fuera del repo (módulo git): git dentro del sandbox necesita leerla. */
 export const GIT_LOCAL_CONFIG = "~/.config/forja/local/git.local.gitconfig";
 
+/** Historial de rtk (token-saver): `rtk` corre dentro del sandbox y escribe ahí su SQLite. */
+export const RTK_DATA_DIR: Record<string, string> = {
+  darwin: "~/Library/Application Support/rtk",
+  linux: "~/.local/share/rtk",
+};
+
 export interface ClaudeSandbox {
   allowed_domains: string[];
   allow_read: string[];
+  allow_write: string[];
 }
 
 /**
@@ -15,7 +22,7 @@ export interface ClaudeSandbox {
  * en orden estable para que `chezmoi diff` no cambie entre ejecuciones.
  */
 export function claudeSandbox(
-  host: Pick<Host, "claude">,
+  host: Pick<Host, "claude"> & Partial<Pick<Host, "os">>,
   profile: Pick<Profile, "claude">,
   enabled: string[],
 ): ClaudeSandbox {
@@ -26,5 +33,8 @@ export function claudeSandbox(
       ...(enabled.includes("git") ? [GIT_LOCAL_CONFIG] : []),
       ...profile.claude.allow_read,
     ]),
+    allow_write: enabled.includes("agents")
+      ? [RTK_DATA_DIR[host.os ?? "darwin"] ?? ""].filter(Boolean)
+      : [],
   };
 }

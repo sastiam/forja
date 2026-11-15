@@ -1,1 +1,5 @@
 brew "opencode"
+# token-saver: filtra la salida de Bash (rtk-ai/rtk; no confundir con «Rust Type Kit»). Sin `rtk init`.
+brew "rtk"
+# aws-core: su MCP corre con uvx.
+brew "uv"
