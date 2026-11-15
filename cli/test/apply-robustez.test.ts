@@ -59,6 +59,22 @@ test("settings.json: escribe model solo si el perfil lo define y sigue siendo JS
   assert.equal(withModel.model, "opus");
 });
 
+test("settings.json: escribe theme solo si el perfil lo define", {
+  skip: !hasChezmoi && "chezmoi no instalado",
+}, () => {
+  const without = renderSettings('claude_theme = ""\n') as Record<string, unknown>;
+  assert.equal(without.theme, undefined);
+  const both = renderSettings('claude_model = "opus"\nclaude_theme = "dark"\n') as Record<
+    string,
+    unknown
+  >;
+  assert.equal(both.model, "opus");
+  assert.equal(both.theme, "dark");
+  const onlyTheme = renderSettings('claude_theme = "dark"\n') as Record<string, unknown>;
+  assert.equal(onlyTheme.model, undefined);
+  assert.equal(onlyTheme.theme, "dark");
+});
+
 // 2. Archivos cambiados fuera de chezmoi
 
 test("chezmoi status: solo cuenta lo cambiado en el disco que apply sobrescribiría", () => {
