@@ -30,6 +30,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - `browsers`: casks con `--adopt` (Chrome y Dia ya instalados a mano); el cask de Dia es `thebrowsercompany-dia`.
 
 ### Fixed
+- `apply --yes` sin TTY ya no falla a medias cuando un archivo gestionado se cambió fuera de chezmoi: lo detecta antes de escribir nada, lo lista con qué hacer (`forja capture` o `--force`) y sale con 3. `plan` y `drift` lo señalan. Nueva opción `apply --force`.
+- `settings.json` ya no pierde el modelo que guarda `/model`: el perfil admite `[claude] model` y la plantilla lo escribe solo si está definido.
+- `runtimes` ejecuta `mise install` tras escribir la config (antes una herramienta nueva, como `bun`, quedaba sin instalar) y `plan` lo marca pendiente con `mise ls --missing`.
+- `looper`: el error de falta de `bun` indica `mise install`; `drift` ya no da por pendiente el clonado con el ref correcto, y `doctor` distingue «sin enlazar» (fallo) de «enlazado pero fuera del PATH de esta shell» (aviso: terminal nueva o reiniciar Claude Code).
+- `git`: `doctor` avisa si la identidad o la firma (`user.*`, `gpg.*`, `commit.gpgsign`…) están en la config global en vez de en `git.local.gitconfig`, con los comandos para moverlas; `capture` no sube esa config al repo.
+- Test de `wt integrate` aislado de la config global de git de quien lo ejecuta.
 - `drift`, `plan` y `report` marcaban como pendientes paquetes instalados: `brew bundle check` se ejecuta ahora con `--no-upgrade`, `HOMEBREW_NO_AUTO_UPDATE=1` y `HOMEBREW_NO_ANALYTICS=1`, sin red (dentro del sandbox no llega a analytics.brew.sh).
 
 ## [0.1.0] - 2026-11-14
