@@ -99,6 +99,30 @@ test("CLAUDE.md: la regla de op:// solo aparece con secrets.provider = 1password
   }
 });
 
+test("settings.json: con containers permite el socket de Colima y añade el hook", {
+  skip: !hasChezmoi && "chezmoi no instalado",
+}, () => {
+  const dir = mkdtempSync(join(tmpdir(), "forja-tmpl-"));
+  const cfg = join(dir, "chezmoi.toml");
+  const render = (modules: string) => {
+    writeFileSync(cfg, `[data]\nmodules = ${modules}\n`);
+    const tmpl = readFileSync(join(root, "home/private_dot_claude/settings.json.tmpl"), "utf8");
+    return JSON.parse(
+      execFileSync("chezmoi", ["--config", cfg, "--source", dir, "execute-template"], {
+        input: tmpl,
+        encoding: "utf8",
+      }),
+    );
+  };
+  const on = render('["containers", "worktrees"]');
+  assert.match(on.sandbox.network.allowUnixSockets[0], /^\/.*\/\.colima\/default\/docker\.sock$/);
+  assert.equal(on.hooks.PreToolUse[0].matcher, "Bash");
+  assert.match(on.hooks.PreToolUse[0].hooks[0].command, /colima-up\.sh$/);
+  const off = render('["worktrees"]');
+  assert.equal(off.sandbox.network.allowUnixSockets, undefined);
+  assert.equal(off.hooks.PreToolUse, undefined);
+});
+
 // 2. Archivos cambiados fuera de chezmoi
 
 test("chezmoi status: solo cuenta lo cambiado en el disco que apply sobrescribiría", () => {

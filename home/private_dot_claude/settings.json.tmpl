@@ -14,7 +14,9 @@
     "enabled": true,
     "failIfUnavailable": true,
     "allowUnsandboxedCommands": false,
-    "network": { "allowedDomains": {{ get $sb "allowed_domains" | default list | toJson }} },
+    "network": { "allowedDomains": {{ get $sb "allowed_domains" | default list | toJson }}{{ if has "containers" .modules }},
+      {{- /* Docker para agentes: la VM de Colima solo monta ~/code (ADR 0012). */}}
+      "allowUnixSockets": [{{ printf "%s/.colima/default/docker.sock" .chezmoi.homeDir | toJson }}]{{ end }} },
     "filesystem": {
       "allowRead": {{ get $sb "allow_read" | default list | toJson }},
       "allowWrite": {{ get $sb "allow_write" | default list | toJson }}
@@ -22,7 +24,8 @@
   },
   "hooks": {
     "Notification": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/notify.sh" }] }],
-    "Stop": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/notify.sh done" }] }]{{ if has "worktrees" .modules }},
+    "Stop": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/notify.sh done" }] }]{{ if has "containers" .modules }},
+    "PreToolUse": [{ "matcher": "Bash", "hooks": [{ "type": "command", "command": "~/.claude/hooks/colima-up.sh", "timeout": 120 }] }]{{ end }}{{ if has "worktrees" .modules }},
     "WorktreeCreate": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/worktree-create.sh" }] }],
     "WorktreeRemove": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/worktree-remove.sh" }] }]{{ end }}
   },

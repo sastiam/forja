@@ -20,6 +20,8 @@ agent_key = "~/.config/forja/agent-signing"
 # Tamaño de la VM de Colima (módulo containers); lo que falte se calcula según la máquina.
 # [containers]
 # disk_gb = 40
+# mounts = ["~/code"]   # lo único que ven los contenedores (ADR 0012); nunca vacío
+# idle_minutes = 15     # apagar Colima sin contenedores; 0 = nunca
 
 [secrets]
 provider = "none"

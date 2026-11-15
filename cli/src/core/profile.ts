@@ -29,8 +29,18 @@ export interface Profile {
     /** Plugins de Claude Code que forja no activa (`token-saver`, `aws-core`…; ver cli/src/core/claude-plugins.ts). */
     plugins_skip?: string[];
   };
-  /** Tamaño de la VM de Colima; lo que falte sale de colimaSize() según la máquina. */
-  containers: { cpu?: number; memory_gb?: number; disk_gb?: number };
+  /**
+   * Tamaño de la VM de Colima (lo que falte sale de colimaSize() según la máquina),
+   * qué carpetas monta (por defecto solo ~/code) y tras cuántos minutos sin
+   * contenedores se apaga sola (por defecto 15; 0 = nunca).
+   */
+  containers: {
+    cpu?: number;
+    memory_gb?: number;
+    disk_gb?: number;
+    mounts?: string[];
+    idle_minutes?: number;
+  };
   secrets: { provider: "1password" | "none" };
 }
 
@@ -104,6 +114,17 @@ export function validateProfile(raw: TomlTable): Profile {
   for (const k of ["cpu", "memory_gb", "disk_gb"] as const) {
     const n = posInt(containers[k], `containers.${k}`);
     if (n !== undefined) profile.containers[k] = n;
+  }
+  if (containers.mounts !== undefined) {
+    const mounts = strList(containers.mounts, "containers.mounts");
+    if (!mounts.length) throw new ProfileError("containers.mounts no puede estar vacío");
+    profile.containers.mounts = mounts;
+  }
+  if (containers.idle_minutes !== undefined) {
+    const n = containers.idle_minutes;
+    if (typeof n !== "number" || !Number.isInteger(n) || n < 0)
+      throw new ProfileError("containers.idle_minutes debe ser un entero >= 0");
+    profile.containers.idle_minutes = n;
   }
   const model = str(claude.model, "claude.model");
   if (model) profile.claude.model = model;
