@@ -5,6 +5,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 ## [Unreleased]
 
 ### Added
+- `containers`: Colima **bajo demanda** y **Docker para agentes** (ADR 0012). La VM solo monta `~/code` (`[containers] mounts`), arranca sola al usar `docker`/`docker-compose`/`floci`/`cdk`/`sam` (hook `PreToolUse` de Claude Code y funciones de `~/.zshrc`) y se apaga tras 15 min sin contenedores (LaunchAgent `dev.forja.colima-idle`, `[containers] idle_minutes`). El sandbox de Claude permite el socket de Colima. `plan` ya no marca la VM apagada como pendiente.
 - `containers`: en Apple Silicon, `plan` y `doctor` comprueban Rosetta 2 y `apply` la instala antes de arrancar Colima (y la reinicia si ya corría); sin ella, Colima arranca sin `--vz-rosetta`.
 
 ### Fixed

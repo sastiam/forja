@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Gestionado por forja (módulo containers). Lo llama cada 5 min el LaunchAgent
+# dev.forja.colima-idle: apaga Colima cuando lleva <min> minutos encendida sin
+# contenedores ni Floci. Cualquier actividad reinicia la cuenta. 0 = nunca.
+set -u
+min="${1:-15}"
+[[ "$min" =~ ^[0-9]+$ ]] && ((min > 0)) || exit 0
+
+state="${XDG_STATE_HOME:-$HOME/.local/state}/forja"
+stamp="$state/colima-idle.since"
+mkdir -p "$state"
+
+colima status >/dev/null 2>&1 || { rm -f "$stamp"; exit 0; }
+# Ocupada: arrancando, con contenedores, con Floci, o docker no responde (ante la duda, no se apaga).
+if [[ -d "$state/colima-start.lock" ]] || ! ids="$(docker --context colima ps -q 2>/dev/null)" ||
+  [[ -n "$ids" ]] || pgrep -xq floci; then
+  rm -f "$stamp"
+  exit 0
+fi
+
+now="$(date +%s)"
+if [[ ! -f "$stamp" ]]; then
+  echo "$now" >"$stamp"
+  exit 0
+fi
+since="$(cat "$stamp")"
+if ((now - since >= min * 60)); then
+  rm -f "$stamp"
+  echo "$(date '+%F %T') colima stop: ${min} min sin contenedores" >&2
+  colima stop >&2
+fi
+exit 0

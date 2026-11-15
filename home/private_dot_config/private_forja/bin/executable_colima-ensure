@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Gestionado por forja (módulo containers). Arranca Colima si está apagada; lo
+# llaman el hook PreToolUse de Claude Code y las funciones de ~/.zshrc. Usa la
+# config guardada (tamaño y montajes los fija `forja apply containers`). Nunca
+# falla: si no puede arrancar, avisa por stderr y el comando sigue su curso.
+set -u
+export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
+command -v colima >/dev/null || exit 0
+colima status >/dev/null 2>&1 && exit 0
+
+state="${XDG_STATE_HOME:-$HOME/.local/state}/forja"
+lock="$state/colima-start.lock"
+mkdir -p "$state"
+# Un lock de un arranque que murió (más de 5 min) no bloquea para siempre.
+find "$lock" -maxdepth 0 -mmin +5 -exec rmdir {} \; 2>/dev/null
+
+if mkdir "$lock" 2>/dev/null; then
+  trap 'rmdir "$lock" 2>/dev/null' EXIT
+  rm -f "$state/colima-idle.since"
+  echo "forja: arrancando Colima (se apaga sola si no se usa)…" >&2
+  colima start >&2 || echo "forja: colima start falló; revisa: colima start --verbose" >&2
+else
+  # Otro proceso la está arrancando: espera hasta 2 min.
+  for _ in $(seq 60); do
+    colima status >/dev/null 2>&1 && exit 0
+    [[ -d "$lock" ]] || break
+    sleep 2
+  done
+fi
+exit 0
