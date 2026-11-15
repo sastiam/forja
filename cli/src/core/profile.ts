@@ -22,6 +22,8 @@ export interface Profile {
    * modelo por defecto que `/model` guarda en settings.json.
    */
   claude: { allowed_domains: string[]; allow_read: string[]; model?: string };
+  /** Tamaño de la VM de Colima; lo que falte sale de colimaSize() según la máquina. */
+  containers: { cpu?: number; memory_gb?: number; disk_gb?: number };
   secrets: { provider: "1password" | "none" };
 }
 
@@ -43,6 +45,13 @@ function str(v: unknown, path: string, required = false): string | undefined {
   return v;
 }
 
+function posInt(v: unknown, path: string): number | undefined {
+  if (v === undefined) return undefined;
+  if (typeof v !== "number" || !Number.isInteger(v) || v < 1)
+    throw new ProfileError(`${path} debe ser un entero positivo`);
+  return v;
+}
+
 function strList(v: unknown, path: string): string[] {
   if (v === undefined) return [];
   if (!Array.isArray(v) || v.some((x) => typeof x !== "string"))
@@ -60,6 +69,7 @@ export function validateProfile(raw: TomlTable): Profile {
   const secrets = table(raw.secrets, "secrets");
   const signing = table(raw.signing, "signing");
   const claude = table(raw.claude, "claude");
+  const containers = table(raw.containers, "containers");
   const provider = str(secrets.provider, "secrets.provider") ?? "none";
   if (provider !== "1password" && provider !== "none")
     throw new ProfileError('secrets.provider: "1password" o "none"');
@@ -81,8 +91,13 @@ export function validateProfile(raw: TomlTable): Profile {
       allowed_domains: strList(claude.allowed_domains, "claude.allowed_domains"),
       allow_read: strList(claude.allow_read, "claude.allow_read"),
     },
+    containers: {},
     secrets: { provider },
   };
+  for (const k of ["cpu", "memory_gb", "disk_gb"] as const) {
+    const n = posInt(containers[k], `containers.${k}`);
+    if (n !== undefined) profile.containers[k] = n;
+  }
   const model = str(claude.model, "claude.model");
   if (model) profile.claude.model = model;
   if (Object.keys(work).length) {
@@ -136,6 +151,7 @@ export function profileToToml(p: Profile): TomlTable {
   if (p.claude.allow_read.length) claude.allow_read = p.claude.allow_read;
   if (p.claude.model) claude.model = p.claude.model;
   if (Object.keys(claude).length) out.claude = claude;
+  if (Object.keys(p.containers).length) out.containers = { ...p.containers };
   out.secrets = { provider: p.secrets.provider };
   return out;
 }

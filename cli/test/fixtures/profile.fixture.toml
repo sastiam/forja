@@ -17,6 +17,10 @@ code_dir = "~/code/personal"
 [signing]
 agent_key = "~/.config/forja/agent-signing"
 
+# Tamaño de la VM de Colima (módulo containers); lo que falte se calcula según la máquina.
+# [containers]
+# disk_gb = 40
+
 [secrets]
 provider = "none"
 
