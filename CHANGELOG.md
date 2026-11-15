@@ -23,7 +23,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - `forja report [-o archivo.md]`: exporta el estado de la máquina (módulos y diagnóstico) a Markdown.
 
 ### Changed
-- CI listo para activar (`docs/pending-workflows/README.md`): `ci.yml` con un check agregado `ci` para la protección de `main`, `release.yml` y auto-merge de Dependabot para subidas patch/minor. CodeQL sigue inactivo.
+- CI activo en `.github/workflows/`: `ci.yml` con un check agregado `ci` para la protección de `main`, `release.yml` y auto-merge de Dependabot para subidas patch/minor. CodeQL sigue inactivo (`docs/pending-workflows/`).
 - Dependabot: `@types/node` no sube de major (sigue a `engines`).
 - `containers`: Colima es el único runtime (ADR 0007, actualizado). `apply` arranca la VM con un tamaño según la máquina (la mitad de los núcleos y un cuarto de la RAM, entre 4 y 24 GB). `doctor` avisa si OrbStack sigue instalado o el contexto no es `colima`. Checks de `aws` y `cdk`.
 - `editor`: Zed con `maxTsServerMemory` según la RAM, ESLint fuera, Biome solo con `biome.json`, más exclusiones de escaneo, OpenCode por ACP, tareas y atajos de forja.
