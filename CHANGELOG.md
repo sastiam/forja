@@ -5,6 +5,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 ## [Unreleased]
 
 ### Added
+- Mods de Claude Code en `plugins/` (marketplace local `forja`, ADR 0012): `token-saver` (Bash por `rtk rewrite`, búsqueda con codebase-memory, banda de contexto y ahorro), `forja-status` (banda de estado y `/forja` con `forja doctor` en un panel), `tdd-guard` (`/tdd`, primero un test) y `quality-guard` (números mágicos tras cada edición y confirmación antes de tocar AWS fuera de Floci). `npm run plugins:check` los valida y prueba con Claude Code.
+- `agents`: `settings.json` declara los marketplaces y plugins (los mods, `aws-core` y `codebase-memory`), `apply` instala los que falten y `doctor` avisa de los que no están, de rtk y de uvx. Brewfile con `rtk` y `uv`. Perfil: `[claude] plugins_skip`.
+- Skills `tdd`, `no-magic-numbers` y `well-architected`.
 - `containers`: en Apple Silicon, `plan` y `doctor` comprueban Rosetta 2 y `apply` la instala antes de arrancar Colima (y la reinicia si ya corría); sin ella, Colima arranca sin `--vz-rosetta`.
 
 ### Fixed

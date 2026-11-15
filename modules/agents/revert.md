@@ -1,1 +1,1 @@
-Borra los symlinks `~/.claude/skills/*` que apuntan a forja, `~/.claude/settings.json` y `~/.config/opencode`; `brew uninstall opencode`.
+Borra los symlinks `~/.claude/skills/*` que apuntan a forja, `~/.claude/settings.json` y `~/.config/opencode`; `brew uninstall opencode rtk uv`. Plugins de Claude Code: `claude plugin uninstall <id>` (o `[claude] plugins_skip` en el perfil y `forja apply agents`) y `claude plugin marketplace remove forja`.

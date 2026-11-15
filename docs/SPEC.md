@@ -409,6 +409,11 @@ enabled = true                      # exporta AWS_PROFILE=floci en .env.worktree
 | `worktree-integrate` | "integra la rama…", conflictos | `wt integrate`; explica los conflictos que mergiraf no resolvió; sugiere abrir Sublime Merge. |
 | `night-run` | "déjalo trabajando esta noche" | Ayuda a escribir el archivo de prompt (objetivo, criterios de terminado, `.agent-done`), corre los checks y lanza `wt night`. |
 | `project-flow` | Floci / CDK / tests / PR | `floci start --persist`, `cdk synth`/`deploy` contra Floci (cuenta `000000000000`), tests y PR con `gh` y Conventional Commits. |
+| `tdd` | implementar o corregir con tests, bloqueo de `tdd-guard` | Ciclo rojo-verde-refactor con los runners del stack; bug = test de reproducción primero. |
+| `no-magic-numbers` | timeouts, límites, umbrales; avisos de `quality-guard` | Constantes con nombre y unidad, excepciones y la regla de linter de cada lenguaje. |
+| `well-architected` | diseñar o revisar infraestructura AWS | Checklist de los 6 pilares aterrizado a CDK y Floci; la revisión formal la hace `aws-well-architected-review` (plugin `aws-core`). |
+
+**Mods y plugins (ADR 0012):** `plugins/` es un marketplace local con los mods `token-saver`, `forja-status`, `tdd-guard` y `quality-guard`. `settings.json` declara ese marketplace, `agent-toolkit-for-aws` (`aws-core`) y `codebase-memory`; `forja apply agents` instala lo que falte. Lista y fuentes en `cli/src/core/claude-plugins.ts`; `[claude] plugins_skip` en el perfil quita alguno.
 
 ## 2.8 Claude Code en el flujo (modo híbrido)
 

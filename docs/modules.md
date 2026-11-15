@@ -4,7 +4,7 @@
 
 | Módulo | Qué hace | Paquetes | Rutas (chezmoi) | Riesgo | Cómo revertir |
 |---|---|---|---|---|---|
-| `agents` | Claude Code (sandbox), OpenCode, Hermes y skills enlazadas | opencode | `~/.claude`, `~/.config/opencode` | medium | Borra los symlinks `~/.claude/skills/*` que apuntan a forja, `~/.claude/settings.json` y `~/.config/opencode`; `brew uninstall opencode`. |
+| `agents` | Claude Code (sandbox), OpenCode, Hermes y skills enlazadas | opencode, rtk, uv | `~/.claude`, `~/.config/opencode` | medium | Borra los symlinks `~/.claude/skills/*` que apuntan a forja, `~/.claude/settings.json` y `~/.config/opencode`; `brew uninstall opencode rtk uv`. Plugins de Claude Code: `claude plugin uninstall <id>` (o `[claude] plugins_skip` en el perfil y `forja apply agents`) y `claude plugin marketplace remove forja`. |
 | `browsers` | Chrome y Dia (solo instala, sin flags no documentados) | google-chrome, thebrowsercompany-dia | — | low | `brew uninstall --cask google-chrome thebrowsercompany-dia` (borra las apps, no los perfiles en `~/Library`). |
 | `containers` | Colima + Docker CLI + Floci + AWS CLI + CDK (AWS local) | floci-io/floci, colima, docker, docker-compose, floci-io/floci/floci, awscli, aws-cdk | `~/.aws/config`, `~/.aws/credentials` | medium | `colima stop && colima delete`, `brew uninstall colima docker docker-compose floci awscli aws-cdk` y retira el perfil `[floci]` de `~/.aws/config`. |
 | `core` | Xcode CLT, Homebrew y utilidades base | coreutils, jq, gh, 1password-cli | — | low | `brew uninstall coreutils jq gh` y `brew uninstall --cask 1password-cli`. Homebrew se desinstala con su script oficial. |
