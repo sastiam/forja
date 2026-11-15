@@ -9,7 +9,7 @@ status: complete
 Esta skill **no contiene lógica**: encadena comandos del proyecto, de Floci, de CDK y de `gh`.
 
 ## AWS local (Floci)
-1. Docker debe ir por Colima: `docker context show` → `colima` (si no, `colima start`; skill `mac-doctor`).
+1. Docker va por Colima (`docker context show` → `colima`). Arranca sola al usar `docker`, `floci`, `cdk` o `sam` (el primer comando puede tardar unos segundos) y solo ve `~/code`: monta en contenedores rutas de ahí. Para testcontainers u otros clientes del socket, lanza antes `docker info`.
 2. `floci start --persist`. Los datos se guardan en `.floci-data/`, que Zed y git ignoran.
 3. Todos los comandos usan `AWS_PROFILE=floci` (cuenta `000000000000`, endpoint `http://localhost:4566`). Si el proyecto tiene `[floci] enabled = true`, el worktree ya lo exporta en `.env.worktree`.
 4. CDK contra Floci:
