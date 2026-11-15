@@ -37,6 +37,13 @@ VM tiene más disco que el tope, `plan` lo indica y para reducirlo hay que recre
 colima delete --force && forja apply containers
 ```
 
+## Rosetta 2
+
+`--vz-rosetta` emula imágenes amd64 (muchas de Floci y de Lambda) con Rosetta 2, que una Mac con Apple Silicon no trae
+de fábrica. En Apple Silicon, `plan` la marca pendiente si falta, `apply` la instala antes de arrancar Colima
+(`sudo softwareupdate --install-rosetta --agree-to-license`) y reinicia la VM si ya estaba en marcha, y `doctor` avisa
+si falta. Si la instalación falla, Colima arranca sin `--vz-rosetta`.
+
 `virtiofs` es lo que evita el I/O lento de sshfs en `pnpm install` y hot reload. Las rutas montadas en contenedores (worktrees, código de Lambdas) deben quedar bajo `$HOME`.
 
 # VERIFICAR: si Floci no encuentra el socket, exporta `DOCKER_HOST=unix://$HOME/.colima/default/docker.sock`.

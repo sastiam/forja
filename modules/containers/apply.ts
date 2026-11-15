@@ -75,14 +75,15 @@ export function resizePlan(
 
 const fmt = (s: ColimaSize) => `${s.cpu} CPU, ${s.memoryGb} GB, ${s.diskGb} GB de disco`;
 
-export function colimaArgs(s: ColimaSize): string[] {
+/** Sin Rosetta 2, `--vz-rosetta` no tiene con qué emular amd64: se arranca sin él. */
+export function colimaArgs(s: ColimaSize, rosetta = true): string[] {
   return [
     "start",
     "--vm-type",
     "vz",
     "--mount-type",
     "virtiofs",
-    "--vz-rosetta",
+    ...(rosetta ? ["--vz-rosetta"] : []),
     "--cpu",
     String(s.cpu),
     "--memory",
@@ -90,6 +91,18 @@ export function colimaArgs(s: ColimaSize): string[] {
     "--disk",
     String(s.diskGb),
   ];
+}
+
+export const ROSETTA_INSTALL = ["softwareupdate", "--install-rosetta", "--agree-to-license"];
+
+/**
+ * Rosetta 2: "n/a" fuera de Apple Silicon. Una Mac nueva no la trae, y sin ella
+ * las imágenes amd64 (muchas de Floci y de Lambda) no corren con `--vz-rosetta`.
+ */
+export async function rosetta(runner: Runner): Promise<"ok" | "missing" | "n/a"> {
+  if ((await runner.query("uname", ["-m"])).stdout.trim() !== "arm64") return "n/a";
+  const r = await runner.query("/usr/bin/arch", ["-x86_64", "/usr/bin/true"]);
+  return r.code === 0 ? "ok" : "missing";
 }
 
 async function machineSize(ctx: ModuleCtx): Promise<ColimaSize | null> {
@@ -110,6 +123,12 @@ async function colimaRunning(runner: Runner): Promise<boolean> {
 export async function plan(ctx: ModuleCtx): Promise<Action[]> {
   const size = await machineSize(ctx);
   const actions: Action[] = [];
+  if ((await rosetta(ctx.runner)) === "missing")
+    actions.push({
+      kind: "step",
+      description: `instalar Rosetta 2 para imágenes amd64 (sudo ${ROSETTA_INSTALL.join(" ")})`,
+      pending: true,
+    });
   if (size) {
     const vm = await currentVm(ctx.runner);
     const r = resizePlan(vm, size);
@@ -141,9 +160,23 @@ export async function apply(ctx: ModuleCtx): Promise<void> {
   const { runner } = ctx;
   const size = await machineSize(ctx);
   const vm = size ? await currentVm(runner) : null;
+  // Rosetta antes de arrancar: una VM que arrancó sin ella no emula amd64 hasta reiniciarse.
+  let ros = await rosetta(runner);
+  let rosettaNew = false;
+  if (ros === "missing") {
+    const r = await runner.exec("sudo", ROSETTA_INSTALL, { stream: true });
+    if (r.code === 0) [ros, rosettaNew] = ["ok", true];
+    else
+      log.warn(
+        `Rosetta 2 no se instaló: Colima arranca sin --vz-rosetta (${ROSETTA_INSTALL.join(" ")})`,
+      );
+  }
   // Nunca borra la VM solo: con un disco mayor que el tope, plan lo indica como guía.
-  if (size && vm && resizePlan(vm, size).restart && (await colimaRunning(runner))) {
-    log.step(`colima stop (redimensionar a ${fmt(size)})`);
+  const resize = size && vm ? resizePlan(vm, size).restart : false;
+  if (size && (resize || rosettaNew) && (await colimaRunning(runner))) {
+    log.step(
+      resize ? `colima stop (redimensionar a ${fmt(size)})` : "colima stop (activar Rosetta)",
+    );
     const s = await runner.exec("colima", ["stop"], { stream: true });
     if (s.code !== 0) throw new Error("colima stop falló");
   }
@@ -154,7 +187,7 @@ export async function apply(ctx: ModuleCtx): Promise<void> {
       log.warn(
         `el disco de Colima (${vm?.diskGb} GB) no se reduce a ${size.diskGb} GB: colima delete --force && forja apply containers (borra imágenes y volúmenes)`,
       );
-    const r = await runner.exec("colima", colimaArgs(start), { stream: true });
+    const r = await runner.exec("colima", colimaArgs(start, ros !== "missing"), { stream: true });
     if (r.code !== 0) throw new Error("colima start falló (revisa `colima start --verbose`)");
   }
   await runner.exec("docker", ["context", "use", RUNTIME_CONTEXT]);
@@ -179,6 +212,13 @@ export async function check(ctx: ModuleCtx): Promise<CheckResult[]> {
               : "docker no disponible (¿colima start?)",
     },
   ];
+  if ((await rosetta(ctx.runner)) === "missing")
+    results.push({
+      name: "Rosetta 2 instalada",
+      ok: false,
+      warn: true,
+      detail: `imágenes amd64 sin emular: forja apply containers (o sudo ${ROSETTA_INSTALL.join(" ")})`,
+    });
   if (existsSync(ORBSTACK_APP))
     results.push({
       name: "OrbStack desinstalado",
