@@ -1,0 +1,27 @@
+{
+  "name": "token-saver",
+  "version": "0.1.0",
+  "author": { "name": "forja" },
+  "description": "Ahorra tokens: pasa los comandos de Bash por rtk (rtk rewrite), prioriza codebase-memory para búsquedas estructurales y muestra contexto usado y ahorro en una banda.",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "rtk": {
+      "type": "boolean",
+      "title": "Reescribir Bash con rtk",
+      "description": "Pregunta a rtk rewrite por cada comando y usa su versión filtrada.",
+      "default": true
+    },
+    "search_hint": {
+      "type": "boolean",
+      "title": "Priorizar codebase-memory",
+      "description": "Añade al prompt una sección corta cuando el MCP de codebase-memory está conectado.",
+      "default": true
+    },
+    "band": {
+      "type": "boolean",
+      "title": "Banda de tokens",
+      "description": "Muestra contexto usado y tokens ahorrados por rtk encima del prompt.",
+      "default": true
+    }
+  }
+}

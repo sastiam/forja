@@ -1,0 +1,15 @@
+{
+  "name": "forja-status",
+  "version": "0.1.0",
+  "author": { "name": "forja" },
+  "description": "Estado de la Mac según forja encima del prompt (rama y puerto del worktree, drift, Colima, modo tapa, batería) y /forja para ver forja doctor en un panel y pasárselo a mac-doctor.",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "drift": {
+      "type": "boolean",
+      "title": "Comprobar drift",
+      "description": "Corre forja drift --json cada 10 minutos (tarda unos segundos).",
+      "default": true
+    }
+  }
+}

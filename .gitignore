@@ -10,3 +10,6 @@ profile.toml
 .env.worktree
 .agent-done
 coverage/
+# Tipos que Claude Code genera al cargar un mod (se regeneran solos)
+plugins/*/.claude-plugin/types/
+plugins/*/tsconfig.json
