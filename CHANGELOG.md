@@ -4,6 +4,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-14
+
 ### Added
 - `forja capture [módulo] [--yes] [--json]`: paquetes de brew fuera de los Brewfiles (pregunta el módulo y lo añade) y archivos cambiados en el disco (`chezmoi re-add`), con el filtro de rutas sensibles. Las plantillas se señalan para integrarlas a mano.
 - `forja wt integrate <rama> [--onto] [--strategy rebase|merge] [--json]`: pone la rama al día (mergiraf y rerere actúan solos), se detiene y lista los conflictos (abre `git mergetool` en TTY) y corre `[checks].integrate`. Nunca hace push.
@@ -37,6 +39,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - `runtimes` ejecuta `mise install` tras escribir la config (antes una herramienta nueva, como `bun`, quedaba sin instalar) y `plan` lo marca pendiente con `mise ls --missing`.
 - `looper`: el error de falta de `bun` indica `mise install`; `drift` ya no da por pendiente el clonado con el ref correcto, y `doctor` distingue «sin enlazar» (fallo) de «enlazado pero fuera del PATH de esta shell» (aviso: terminal nueva o reiniciar Claude Code).
 - `git`: `doctor` avisa si la identidad o la firma (`user.*`, `gpg.*`, `commit.gpgsign`…) están en la config global en vez de en `git.local.gitconfig`, con los comandos para moverlas; `capture` no sube esa config al repo.
+- `doctor` ya no muestra «actívalo manualmente» junto a FileVault cuando está activo.
 - Test de `wt integrate` aislado de la config global de git de quien lo ejecuta.
 - `drift`, `plan` y `report` marcaban como pendientes paquetes instalados: `brew bundle check` se ejecuta ahora con `--no-upgrade`, `HOMEBREW_NO_AUTO_UPDATE=1` y `HOMEBREW_NO_ANALYTICS=1`, sin red (dentro del sandbox no llega a analytics.brew.sh).
 
@@ -52,5 +55,6 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - Archivos de comunidad de GitHub, plantillas, Dependabot y workflows de CI, release y CodeQL.
 - ADRs de las decisiones iniciales.
 
-[Unreleased]: https://github.com/sastiam/forja/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/sastiam/forja/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/sastiam/forja/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/sastiam/forja/releases/tag/v0.1.0

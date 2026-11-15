@@ -2,8 +2,28 @@ import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { HOOK_MARK, hookPath, hookState, PRE_COMMIT } from "../../modules/security/apply.ts";
+import { check, HOOK_MARK, hookPath, hookState, PRE_COMMIT } from "../../modules/security/apply.ts";
+import type { ModuleCtx } from "../src/core/plan.ts";
+import { createFakeRunner } from "../src/core/runners/shell.ts";
 import { tmp } from "./helpers.ts";
+
+test("FileVault: el consejo de activarlo solo aparece si está apagado", async () => {
+  const fv = async (stdout: string) => {
+    const runner = createFakeRunner((cmd) => (cmd === "fdesetup" ? { stdout } : undefined));
+    const r = await check({ root: tmp(), runner } as unknown as ModuleCtx);
+    return r.find((x) => x.name === "FileVault activo");
+  };
+  assert.deepEqual(await fv("FileVault is On.\n"), {
+    name: "FileVault activo",
+    ok: true,
+    detail: undefined,
+  });
+  assert.deepEqual(await fv("FileVault is Off.\n"), {
+    name: "FileVault activo",
+    ok: false,
+    detail: "actívalo manualmente",
+  });
+});
 
 test("pre-commit de gitleaks: estados del hook", () => {
   const root = tmp();
