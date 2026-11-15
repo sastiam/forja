@@ -34,3 +34,5 @@ allow_read = ["~/.npmrc"]
 # model = "opus"
 # Tema de Claude Code (settings.json "theme"); lo que guarda /config.
 # theme = "dark"
+# Plugins de Claude Code que forja no activa (cli/src/core/claude-plugins.ts).
+plugins_skip = ["quality-guard"]

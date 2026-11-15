@@ -1,0 +1,27 @@
+{
+  "name": "forja",
+  "owner": { "name": "forja" },
+  "description": "Mods de Claude Code que forja instala y mantiene (módulo agents).",
+  "plugins": [
+    {
+      "name": "token-saver",
+      "source": "./token-saver",
+      "description": "rtk para Bash, codebase-memory para búsquedas y banda de tokens."
+    },
+    {
+      "name": "forja-status",
+      "source": "./forja-status",
+      "description": "Estado de forja encima del prompt y /forja con forja doctor."
+    },
+    {
+      "name": "tdd-guard",
+      "source": "./tdd-guard",
+      "description": "TDD determinista: primero un test, después el código."
+    },
+    {
+      "name": "quality-guard",
+      "source": "./quality-guard",
+      "description": "Números mágicos tras cada edición y guard de AWS fuera de Floci."
+    }
+  ]
+}

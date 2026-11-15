@@ -12,7 +12,8 @@
     "test": "node --test \"cli/test/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "forja": "node cli/src/main.ts"
+    "forja": "node cli/src/main.ts",
+    "plugins:check": "sh scripts/check-plugins.sh"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.6",

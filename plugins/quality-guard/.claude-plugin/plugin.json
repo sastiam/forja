@@ -1,0 +1,20 @@
+{
+  "name": "quality-guard",
+  "version": "0.1.0",
+  "author": { "name": "forja" },
+  "description": "Avisa de números mágicos tras cada edición (biome noMagicNumbers, ruff PLR2004) y pide confirmación antes de cambiar o borrar recursos en una cuenta AWS real fuera de Floci.",
+  "userConfig": {
+    "magic_numbers": {
+      "type": "boolean",
+      "title": "Avisar de números mágicos",
+      "description": "Corre el linter sobre el archivo editado y añade los avisos al resultado.",
+      "default": true
+    },
+    "aws_guard": {
+      "type": "boolean",
+      "title": "Guard de AWS",
+      "description": "Pide confirmación (o bloquea lo destructivo) en comandos aws/cdk/sam/terraform contra cuentas reales.",
+      "default": true
+    }
+  }
+}

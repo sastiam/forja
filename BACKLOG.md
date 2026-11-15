@@ -8,6 +8,9 @@
 - [ ] git: evaluar si Fork reemplaza a Sublime Merge (falta verificar si muestra la base en conflictos).
 - [x] macos: compatibilidad con macOS 27. Zed 1.28.1 y Claude Code 2.1.325 funcionan en 27.2.1; OrbStack declara soporte desde v2.2.2 (ago-2026) con arreglos posteriores, pendiente de probar al instalarlo.
 - [ ] containers: revisar madurez de Floci. Última release vista: 1.5.32, cadencia quincenal. Falta fijar versión en el Brewfile y probar compat-cdk con los stacks reales.
+- [ ] agents: medir el ahorro real de rtk y codebase-memory tras dos semanas (`rtk gain`, `/cost`, `/context`) y decidir si se quedan.
+- [ ] agents: comprobar en el Mac que `rtk` escribe su historial dentro del sandbox (`allowWrite`) y que los permisos no piden confirmación por la reescritura `rtk …`.
+- [ ] agents: valorar `--config` en `claude plugin install` para fijar las opciones de los mods desde el perfil.
 
 ## Hosts
 - [ ] fedora: módulos core/shell/git/runtimes/agents con dnf.

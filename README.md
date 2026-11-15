@@ -58,7 +58,20 @@ Códigos de salida: `0` ok · `1` error · `2` desvío · `3` requiere confirmac
 
 ## Skills
 
-Fuente única en `skills/`, enlazada a Claude Code. Las skills solo llaman a la CLI. Completas en v0.1.0: `worktree-new`, `worktree-status`; el resto son borradores (`status: draft`).
+Fuente única en `skills/`, enlazada a Claude Code. Las skills de forja solo llaman a la CLI. De calidad: `tdd`, `no-magic-numbers` y `well-architected` (AWS/CDK, con Floci).
+
+## Mods y plugins de Claude Code
+
+`plugins/` es un marketplace local con cuatro mods (código que corre dentro de Claude Code). El módulo `agents` los instala junto con `aws-core` (skills y MCP oficiales de AWS) y `codebase-memory` (grafo de código local). Detalle en [`modules/agents/README.md`](modules/agents/README.md) y [ADR 0012](docs/adr/0012-mods-y-plugins-de-claude.md).
+
+| Mod | Para qué |
+|---|---|
+| `token-saver` | Menos tokens: rtk filtra la salida de Bash, codebase-memory para búsquedas estructurales, banda con contexto y ahorro |
+| `forja-status` | Rama/puerto, drift, Colima, modo tapa y batería encima del prompt; `/forja doctor` en un panel |
+| `tdd-guard` | Primero un test que falle; `/tdd on\|off` |
+| `quality-guard` | Números mágicos tras cada edición y confirmación antes de tocar AWS fuera de Floci |
+
+Para no activar alguno: `[claude] plugins_skip` en el perfil.
 
 ## Hosts soportados
 

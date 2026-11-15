@@ -1,0 +1,16 @@
+{
+  "name": "tdd-guard",
+  "version": "0.1.0",
+  "author": { "name": "forja" },
+  "description": "Bloquea editar código de producción hasta que la sesión toque un test (TDD determinista, sin modelo). /tdd on|off|status.",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "default_mode": {
+      "type": "string",
+      "title": "Modo al empezar la sesión",
+      "description": "on bloquea; off solo registra. /tdd lo cambia para la sesión.",
+      "options": ["on", "off"],
+      "default": "on"
+    }
+  }
+}
