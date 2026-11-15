@@ -65,9 +65,11 @@ export async function apply(ctx: ModuleCtx): Promise<void> {
 }
 
 export async function check(ctx: ModuleCtx): Promise<CheckResult[]> {
+  const fv = await fileVaultOn(ctx);
   return [
     { name: "firewall activo", ok: await firewallOn(ctx) },
-    { name: "FileVault activo", ok: await fileVaultOn(ctx), detail: "actívalo manualmente" },
+    // El consejo solo tiene sentido si está apagado; doctor muestra el detalle también en los ✔.
+    { name: "FileVault activo", ok: fv, detail: fv ? undefined : "actívalo manualmente" },
     {
       name: "pre-commit de gitleaks (repo de forja)",
       ok: hookState(hookPath(ctx.root)) !== "missing",
