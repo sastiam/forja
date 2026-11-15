@@ -14,14 +14,16 @@ Esta skill **no contiene lógica**: explica y lanza `forja wt night`, que envuel
    - Cada change existe en `openspec/changes/<nombre>/tasks.md`.
    - Corriente conectada (o `--allow-battery`).
 2. **Worktree de agente:** rama `agent/night-…`, con la firma ssh de agentes. Si ya existe, lo reutiliza.
-3. **`sandbox-check`** en el worktree: git, escritura, firma y red de cada `--host`.
+3. **Sandbox del agente** (ADR 0013): escribe `~/.local/state/forja/night/<rama>.settings.json` (sandbox obligatorio, dominios del host/perfil/`--host`, Docker) y comprueba:
+   - **arnés**, fuera del sandbox: git, escritura en el git-dir y firma;
+   - **agente**, dentro del sandbox, con una sesión corta de `claude -p` (Haiku) y el mismo settings: git, escritura, red de cada `--host` y que el sandbox está activo.
 4. **Modo tapa** (`forja awake`): el Mac no duerme al cerrar la tapa. Se quita al terminar, con Ctrl-C o si la batería baja del 20 % sin cargador.
-5. **openspec-cascade** con `--repo <worktree> --changes … --engine …`: una sesión por tarea, el arnés verifica y hace los commits. Logs en `~/.local/state/forja/logs/night/`.
+5. **openspec-cascade** con `--repo <worktree> --changes … --engine … --settings <settings de la noche>`: una sesión por tarea, el arnés verifica y hace los commits. Logs en `~/.local/state/forja/logs/night/`.
 6. **Notificación** por ntfy al terminar o al fallar. **Nunca hace push.**
 
 ## Pasos
 1. Comprueba que los changes están listos: `openspec list` en el repo y que cada `tasks.md` tenga sus `Verify:`. Si faltan, ayuda a escribirlos antes de lanzar.
-2. Instala las dependencias del proyecto en el repo principal (`pnpm install`): el loop no debe necesitar la red de paquetes.
+2. Instala las dependencias del proyecto en el repo principal (`pnpm install`): el loop no debe necesitar la red de paquetes. Si alguna tarea necesita un dominio (una API, un registry), pásalo con `--host dominio`; lo que no esté permitido fallará de noche en vez de pedir permiso.
 3. Previsualiza el plan:
    ```sh
    forja wt night --changes a,b --dry-run
@@ -35,5 +37,6 @@ Esta skill **no contiene lógica**: explica y lanza `forja wt night`, que envuel
 
 ## Reglas
 - No lances el loop si alguna comprobación falla: cada fallo trae su arreglo.
+- El sandbox solo cubre el motor `claude`. `--no-sandbox` (o los motores `opencode`/`antigravity`) deja al agente sin sandbox: úsalo solo a propósito y sin secretos al alcance.
 - Con la tapa cerrada, el Mac debe estar sobre una superficie ventilada, nunca en una mochila.
 - Si el loop murió y `forja awake status` sale «huérfano», ejecuta `forja awake off`.

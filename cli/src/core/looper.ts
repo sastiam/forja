@@ -8,7 +8,7 @@ import { home } from "./paths.ts";
  */
 export const LOOPER_REPO = "https://github.com/sastiam/openspec-cascade";
 /** Ref fijado; se sube con una PR (forja-maintain), nunca solo. */
-export const LOOPER_REF = "70e253795eeace77666c3dc69aa39f95464d7cd6";
+export const LOOPER_REF = "0e0b74b3b33d5589778e21a76a1fa5c7f55bdbc9";
 export const LOOPER_BIN = "openspec-cascade";
 export const LOOPER_ENGINES = ["claude", "opencode", "antigravity"] as const;
 export type LooperEngine = (typeof LOOPER_ENGINES)[number];

@@ -22,6 +22,7 @@ const opts = (o: Partial<NightOpts> = {}): NightOpts => ({
   fullGate: false,
   allowBattery: false,
   hosts: ["github.com"],
+  sandbox: false,
   ...o,
 });
 
@@ -89,4 +90,45 @@ test("looper: plan pendiente si no está clonado en el ref fijado", async () => 
   assert.equal(a?.pending, true);
   assert.match(a?.description ?? "", new RegExp(LOOPER_REF.slice(0, 7)));
   delete process.env.FORJA_LOOPER_DIR;
+});
+
+test("cascadeArgs pasa --settings solo con sandbox", () => {
+  assert.deepEqual(cascadeArgs("/wt", opts(), "/logs", "/s.json").slice(-2), [
+    "--settings",
+    "/s.json",
+  ]);
+  assert.ok(!cascadeArgs("/wt", opts(), "/logs").includes("--settings"));
+});
+
+test("preflight con sandbox: exige motor claude y openspec-cascade con --settings", async () => {
+  const repo = repoWith("a", "b");
+  const runner = (help: string) =>
+    createFakeRunner((cmd, args) =>
+      cmd === "openspec-cascade" && args[0] === "--help" ? { stdout: help } : { code: 0 },
+    );
+  const sbx = (p: Awaited<ReturnType<typeof preflight>>) =>
+    p
+      .filter((x) => x.name.includes("sandbox") || x.name.includes("--settings"))
+      .map((x) => [x.name, x.ok]);
+
+  const ok = await preflight(
+    runner("  --settings <file>  Extra"),
+    repo,
+    opts({ sandbox: true }),
+    "linux",
+  );
+  assert.deepEqual(sbx(ok), [
+    ["sandbox: motor claude", true],
+    ["openspec-cascade acepta --settings", true],
+  ]);
+  const old = await preflight(runner("  --log-dir <path>"), repo, opts({ sandbox: true }), "linux");
+  assert.deepEqual(sbx(old)[1], ["openspec-cascade acepta --settings", false]);
+  const agy = await preflight(
+    runner("--settings"),
+    repo,
+    opts({ sandbox: true, engine: "antigravity" }),
+    "linux",
+  );
+  assert.deepEqual(sbx(agy)[0], ["sandbox: motor claude", false]);
+  assert.deepEqual(sbx(await preflight(runner(""), repo, opts(), "linux")), []);
 });
