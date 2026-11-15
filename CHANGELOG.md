@@ -23,9 +23,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - `forja report [-o archivo.md]`: exporta el estado de la máquina (módulos y diagnóstico) a Markdown.
 
 ### Changed
+- `containers`: Colima arranca ligero por defecto (un tercio de los núcleos entre 2 y 4, un octavo de la RAM entre 4 y 8 GB y 40 GB de disco); `[containers] cpu`, `memory_gb` y `disk_gb` en el perfil lo fijan por máquina. `apply` reinicia la VM si cambian la CPU o la RAM, y `plan` avisa de que un disco mayor que el tope solo se reduce recreando la VM.
 - CI listo para activar (`docs/pending-workflows/README.md`): `ci.yml` con un check agregado `ci` para la protección de `main`, `release.yml` y auto-merge de Dependabot para subidas patch/minor. CodeQL sigue inactivo.
 - Dependabot: `@types/node` no sube de major (sigue a `engines`).
-- `containers`: Colima es el único runtime (ADR 0007, actualizado). `apply` arranca la VM con un tamaño según la máquina (la mitad de los núcleos y un cuarto de la RAM, entre 4 y 24 GB). `doctor` avisa si OrbStack sigue instalado o el contexto no es `colima`. Checks de `aws` y `cdk`.
+- `containers`: Colima es el único runtime (ADR 0007, actualizado). `apply` arranca la VM con un tamaño según la máquina. `doctor` avisa si OrbStack sigue instalado o el contexto no es `colima`. Checks de `aws` y `cdk`.
 - `editor`: Zed con `maxTsServerMemory` según la RAM, ESLint fuera, Biome solo con `biome.json`, más exclusiones de escaneo, OpenCode por ACP, tareas y atajos de forja.
 - `browsers`: casks con `--adopt` (Chrome y Dia ya instalados a mano); el cask de Dia es `thebrowsercompany-dia`.
 
