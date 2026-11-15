@@ -4,6 +4,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-14
+
 ### Added
 - `forja capture [módulo] [--yes] [--json]`: paquetes de brew fuera de los Brewfiles (pregunta el módulo y lo añade) y archivos cambiados en el disco (`chezmoi re-add`), con el filtro de rutas sensibles. Las plantillas se señalan para integrarlas a mano.
 - `forja wt integrate <rama> [--onto] [--strategy rebase|merge] [--json]`: pone la rama al día (mergiraf y rerere actúan solos), se detiene y lista los conflictos (abre `git mergetool` en TTY) y corre `[checks].integrate`. Nunca hace push.
@@ -53,5 +55,6 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - Archivos de comunidad de GitHub, plantillas, Dependabot y workflows de CI, release y CodeQL.
 - ADRs de las decisiones iniciales.
 
-[Unreleased]: https://github.com/sastiam/forja/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/sastiam/forja/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/sastiam/forja/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/sastiam/forja/releases/tag/v0.1.0
