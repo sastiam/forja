@@ -18,7 +18,7 @@ const HELP = `forja — provisionamiento de estaciones de desarrollo
 
   forja setup [--no-claude]            Primera configuración (perfil + plan + apply + doctor)
   forja plan [módulo…] [--json]        Muestra qué cambiaría, sin tocar nada
-  forja apply [módulo…] [--yes] [--dry-run]
+  forja apply [módulo…] [--yes] [--dry-run] [--force]
   forja drift [--json]                 Detecta desvíos (sale con 2 si los hay)
   forja capture [módulo] [--yes] [--json]  Pasa al repo paquetes y archivos cambiados en la máquina
   forja doctor [--json] [--fix]        Diagnóstico de módulos y salud (--fix: con Claude, skill mac-doctor)

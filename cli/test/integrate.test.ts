@@ -7,6 +7,11 @@ import { integrate } from "../src/wt/integrate.ts";
 import { createWorktree } from "../src/wt/new.ts";
 import { isolateState, makeRepo, sh } from "./helpers.ts";
 
+// integrate ejecuta git con process.env: sin esto hereda la config global de
+// quien corre los tests (p. ej. commit.gpgsign con una clave que no existe aquí).
+process.env.GIT_CONFIG_GLOBAL = "/dev/null";
+process.env.GIT_CONFIG_SYSTEM = "/dev/null";
+
 const runner = createRunner(false);
 
 function commit(dir: string, file: string, text: string, msg: string) {

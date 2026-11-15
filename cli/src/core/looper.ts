@@ -15,3 +15,6 @@ export type LooperEngine = (typeof LOOPER_ENGINES)[number];
 
 export const looperDir = (): string =>
   process.env.FORJA_LOOPER_DIR ?? join(home(), ".local", "share", "openspec-cascade");
+
+/** Carpeta donde `bun link` deja los binarios globales (`$BUN_INSTALL/bin`). */
+export const bunBinDir = (): string => join(process.env.BUN_INSTALL ?? join(home(), ".bun"), "bin");

@@ -6,7 +6,7 @@ import { claudeSandbox } from "../core/claude-sandbox.ts";
 import { load } from "../core/context.ts";
 import { log, out } from "../core/log.ts";
 import type { Module } from "../core/modules.ts";
-import { chezmoiConfigPath } from "../core/paths.ts";
+import { chezmoiConfigPath, home } from "../core/paths.ts";
 import {
   type Ctx,
   chezmoiSource,
@@ -15,6 +15,7 @@ import {
   type ModuleCtx,
   moduleTargets,
   osName,
+  tildify,
 } from "../core/plan.ts";
 import { confirm, isInteractive } from "../core/prompt.ts";
 import * as brew from "../core/runners/brew.ts";
@@ -43,6 +44,8 @@ export async function writeChezmoiConfig(ctx: Ctx): Promise<void> {
     work_enabled: p.profiles.work?.enabled === true,
     secrets_provider: p.secrets.provider,
     claude_sandbox: { ...claudeSandbox(ctx.host, p, ctx.enabled) },
+    /** Vacío = la plantilla no escribe "model" y Claude Code usa su modelo por defecto. */
+    claude_model: p.claude.model ?? "",
     zed_ts_memory_mb: zedTsMemoryMb(totalmem()),
   };
   await ctx.runner.writeFile(
@@ -89,6 +92,7 @@ export async function applyCommand(argv: string[]): Promise<number> {
       "dry-run": { type: "boolean" },
       "i-understand-the-risks": { type: "boolean" },
       revert: { type: "boolean" },
+      force: { type: "boolean" },
     },
   });
   const dryRun = values["dry-run"] === true;
@@ -114,6 +118,28 @@ export async function applyCommand(argv: string[]): Promise<number> {
     if (!(await confirm("¿Aplicar estos cambios?"))) return 3;
   }
 
+  // Antes de escribir nada: chezmoi pide confirmación por TTY para lo cambiado
+  // fuera de él, y sin TTY fallaría a mitad del apply.
+  const force = values.force === true;
+  const targets = order.flatMap((n) => {
+    const m = all.get(n);
+    return m && (!m.os.length || m.os.includes(osName(ctx.platform))) ? moduleTargets(m) : [];
+  });
+  const outside = await chezmoi.conflicts(ctx.runner, chezmoiSource(ctx.root), targets, home());
+  if (outside.length) {
+    const list = outside.map((f) => `  ~ ${tildify(f)}`).join("\n");
+    if (force) log.warn(`--force: se sobrescriben cambios hechos fuera de chezmoi:\n${list}`);
+    else if (!dryRun && !isInteractive()) {
+      log.error(
+        `Archivos cambiados fuera de chezmoi que apply sobrescribiría:\n${list}\n` +
+          "Revisa el cambio (chezmoi diff <archivo>) y elige:\n" +
+          "  · conservarlo: forja capture (o muévelo al perfil / git.local.gitconfig)\n" +
+          "  · descartarlo: forja apply … --yes --force",
+      );
+      return 3;
+    } else log.warn(`chezmoi preguntará antes de sobrescribir:\n${list}`);
+  }
+
   await writeChezmoiConfig(ctx);
   const results: { name: string; ok: boolean }[] = [];
   let failed = false;
@@ -132,7 +158,9 @@ export async function applyCommand(argv: string[]): Promise<number> {
         if (r.code !== 0) throw new Error(`brew bundle falló (${r.code})`);
       }
       if (m.targets.length) {
-        const r = await chezmoi.apply(ctx.runner, chezmoiSource(ctx.root), moduleTargets(m));
+        const r = await chezmoi.apply(ctx.runner, chezmoiSource(ctx.root), moduleTargets(m), {
+          force,
+        });
         if (r.code !== 0) throw new Error(`chezmoi apply falló: ${r.stderr.trim()}`);
       }
       await (await loadHooks(m)).apply?.(mctx);

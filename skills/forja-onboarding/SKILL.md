@@ -15,7 +15,7 @@ Entrevista al usuario y escribe su perfil local. Nada de lo que escribes se sube
 4. **Módulos:** lista los del host (`forja module ls`). Pregunta cuáles saltar (`modules_skip`; `macos-aggressive` siempre fuera salvo que lo pida) y cuáles añadir (`modules_extra`).
 5. **Firma de agentes:** ¿quiere commits de agentes firmados? Si dice que sí, `[signing] agent_key = "~/.config/forja/agent-signing"` (ver `docs/guide/firma.md`).
 6. **Notificaciones:** ¿tiene un tópico de ntfy? Si lo tiene, `[notify] ntfy_topic_file`.
-7. **Sandbox de Claude Code:** ¿necesita dominios o lecturas extra (registry privado, dominios de empresa)? Van en `[claude] allowed_domains` y `allow_read`.
+7. **Sandbox de Claude Code:** ¿necesita dominios o lecturas extra (registry privado, dominios de empresa)? Van en `[claude] allowed_domains` y `allow_read`. Pregunta también qué modelo usa por defecto en Claude Code (`[claude] model`, p. ej. `"opus"`); si no lo fija aquí, `forja apply` no escribe `model` y `/model` se perderá en el siguiente apply.
 8. **AWS SSO** (si usa containers): los perfiles reales van en `~/.config/forja/local/aws.local.config`.
 
 ## Qué escribes
