@@ -37,7 +37,7 @@ Híbrido: la instalación la hace código determinista (Brewfile por módulo + c
 |---|---|
 | `forja setup [--no-claude]` | Crea el perfil local (con Claude, skill `forja-onboarding`), luego plan → apply → doctor |
 | `forja plan [módulo…] [--json]` | Muestra qué cambiaría; no modifica nada |
-| `forja apply [módulo…] [--yes] [--dry-run] [--revert]` | Aplica módulos resolviendo dependencias; `--revert` los deshace |
+| `forja apply [módulo…] [--yes] [--dry-run] [--force] [--revert]` | Aplica módulos resolviendo dependencias; `--force` sobrescribe lo cambiado fuera de chezmoi; `--revert` los deshace |
 | `forja drift [--json]` | Detecta desvíos (sale con código 2) |
 | `forja capture [módulo] [--yes] [--json]` | Pasa al repo los paquetes y archivos cambiados en la máquina |
 | `forja doctor [--json] [--fix]` | Diagnóstico de módulos y salud; `--fix` abre Claude con `mac-doctor` |

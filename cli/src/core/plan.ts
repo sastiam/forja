@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Host } from "./hosts.ts";
 import type { Module } from "./modules.ts";
-import { expandHome } from "./paths.ts";
+import { expandHome, home } from "./paths.ts";
 import type { Profile } from "./profile.ts";
 import * as brew from "./runners/brew.ts";
 import * as chezmoi from "./runners/chezmoi.ts";
@@ -65,6 +65,12 @@ export function chezmoiSource(root: string): string {
   return join(root, "home");
 }
 
+/** /Users/x/.zshrc → ~/.zshrc, para mensajes. */
+export function tildify(p: string): string {
+  const h = home();
+  return p === h || p.startsWith(`${h}/`) ? `~${p.slice(h.length)}` : p;
+}
+
 export function moduleTargets(m: Module): string[] {
   return m.targets.map(expandHome);
 }
@@ -92,13 +98,21 @@ export async function planModule(ctx: Ctx, m: Module): Promise<ModulePlan> {
     });
   }
   if (m.targets.length && existsSync(chezmoiSource(ctx.root))) {
-    const d = await chezmoi.diff(ctx.runner, chezmoiSource(ctx.root), moduleTargets(m));
+    const source = chezmoiSource(ctx.root);
+    const d = await chezmoi.diff(ctx.runner, source, moduleTargets(m));
+    const outside =
+      d.state === "pending"
+        ? await chezmoi.conflicts(ctx.runner, source, moduleTargets(m), home())
+        : [];
+    const note = outside.length
+      ? ` (modificado fuera de chezmoi: ${outside.map(tildify).join(", ")})`
+      : "";
     actions.push({
       kind: "chezmoi",
       description:
         d.state === "unavailable"
           ? `chezmoi apply ${m.targets.join(" ")} (chezmoi aún no instalado)`
-          : `chezmoi apply ${m.targets.join(" ")}`,
+          : `chezmoi apply ${m.targets.join(" ")}${note}`,
       pending: d.state !== "ok",
     });
   }
