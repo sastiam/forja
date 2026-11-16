@@ -16,6 +16,8 @@ Claude Code con sandbox obligatorio, `deny` de secretos y los plugins de la tabl
 | `quality-guard@forja` | Tras cada edición, avisa de números mágicos en las líneas nuevas (biome `noMagicNumbers`, ruff `PLR2004`). Pide confirmación antes de cambiar recursos AWS fuera de Floci y bloquea lo destructivo (`cdk destroy`, `s3 rm --recursive`…). |
 | `aws-core@agent-toolkit-for-aws` | Skills y MCP oficiales de AWS, incluida `aws-well-architected-review`. Su MCP corre con `uvx`. |
 | `codebase-memory@codebase-memory` | Grafo de código en SQLite local (MCP por `npx`, sin telemetría). |
+| `egm@egm` | Revisores Goldfish de EGM (`google/elephant-goldfish-model`). Los usan los comandos `cascade-spec-*`. |
+| `cascade@openspec-cascade` | Comandos `cascade-spec-brainstorm`, `-review` y `-drift` y skills de openspec-cascade, desde `main` en GitHub (no desde el repo de desarrollo). Su hook SDD solo actúa en repos con `openspec/`. |
 
 - Quitar uno: `[claude] plugins_skip = ["quality-guard"]` en el perfil y `forja apply agents`. Para una sesión: `/plugin` o `claude --safe-mode`.
 - Opciones de cada mod (p. ej. el modo inicial de `tdd-guard`): `/plugin configure <id>`.
