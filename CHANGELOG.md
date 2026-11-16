@@ -17,6 +17,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ### Changed
 - `editor`: la plantilla de Zed fija el tema Tokyo Night Storm, los iconos Catppuccin Macchiato y el panel de proyecto a la izquierda, para que `forja apply editor` no pise las preferencias personales.
+- `editor`: TypeScript y TSX usan tsgo (extensión `tsgo`, servidor `typescript-ls`) en lugar de vtsls, que sigue para JavaScript. La plantilla deja de excluir `typescript-ls` en esos lenguajes y declara `auto_install_extensions` (`html`, `tsgo` y los temas). Probado en un monorepo pnpm sin el bug de watchers.
 
 ### Fixed
 - `wt night`: el agente corría sin sandbox (openspec-cascade solo carga los ajustes del proyecto) y `sandbox-check` se ejecutaba fuera del sandbox, así que salía en verde aunque dentro fuera a fallar.

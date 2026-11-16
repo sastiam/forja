@@ -108,7 +108,7 @@ Porque el repo es público. Durante el onboarding, Claude genera en tu máquina 
 | Runtimes | mise (Node 26 LTS / 24, pnpm, uv, Rust) | Una herramienta, versión por proyecto | fnm (solo Node) |
 | Contenedores | OrbStack (licencia Pro si es uso comercial) | Mejor I/O de bind mounts y menor RAM en reposo | Colima |
 | AWS local | Floci + AWS CLI + CDK | MIT, sin cuenta; Lambda necesita socket Docker → OrbStack | LocalStack de pago |
-| Editor | Zed + vtsls + Biome | tsgo aún tiene bug con symlinks de pnpm | — |
+| Editor | Zed + tsgo (TS/TSX) + vtsls (JS) + Biome | vtsls en todo: tsgo tenía un bug con symlinks de pnpm que no se reprodujo en la prueba | — |
 | Terminal | Ghostty | ~28 MB en reposo, notificaciones, sin telemetría | iTerm2 |
 | Conflictos | mergiraf (automático) + Zed (triviales) + Sublime Merge (3 paneles) | Lo más parecido a GitKraken verificado | Fork |
 | Worktrees | `git worktree` + `forja wt` + `claude --worktree` | Lógica única para humano y agentes | — |
@@ -340,7 +340,7 @@ commands = ["git --version", "mergiraf --version", "smerge --version"]
 - **git:** config global (zdiff3, rerere, histogram, fsmonitor, delta), driver de mergiraf, `smerge` como mergetool, `git maintenance start` en los repos registrados, `includeIf` del perfil local.
 - **runtimes:** `~/.config/mise/config.toml` global (node 26, pnpm, uv, python 3.13, rust stable), `idiomatic_version_file_enable_tools = ["node"]`. Rust **sin** `target-dir` compartido y sin sccache por defecto.
 - **containers:** OrbStack (avisar sobre la licencia Pro para uso comercial), Floci (`brew install floci-io/floci/floci`), awscli, aws-cdk, perfil `floci` público en `~/.aws/config`. Check: `docker context show` = `orbstack` y `floci doctor`.
-- **editor:** Zed con vtsls (tsgo desactivado mientras siga abierto el bug de watchers con symlinks de pnpm), Biome, `maxTsServerMemory: 4096` y `file_scan_exclusions`.
+- **editor:** Zed con tsgo para TypeScript y TSX y vtsls para JavaScript, Biome, `maxTsServerMemory` (solo vtsls) y `file_scan_exclusions`.
 - **terminal:** Ghostty, notificaciones al terminar comandos largos y `shell-integration = zsh`.
 - **browsers:** casks de Chrome y Dia. Solo instala; no aplica flags no documentados.
 - **agents:**
@@ -708,7 +708,7 @@ No se activa `hermes gateway install`. brew y pip no son métodos soportados par
 }
 ```
 
-Volver a evaluar tsgo cuando Zed corrija el problema de watchers sobre los symlinks de pnpm. Esto queda como entrada en el backlog.
+tsgo se activó tras probarlo en un monorepo pnpm sin el bug de watchers; si reaparece, volver a vtsls en la plantilla y reabrir la entrada del backlog.
 
 ### A.6 Ghostty (módulo terminal)
 
@@ -776,7 +776,7 @@ Nota clave para trabajo nocturno: con la tapa cerrada y sin monitor externo, el 
 # Backlog
 
 ## Por evaluar
-- [ ] editor: volver a probar tsgo en Zed cuando se corrija el watcher recursivo sobre symlinks de pnpm.
+- [x] editor: tsgo en Zed (activado; ver BACKLOG.md).
 - [ ] containers: medir pnpm install + hot reload del monorepo real en OrbStack vs Colima y registrar resultados en un ADR.
 - [ ] agents: confirmar si OpenCode lee ~/.claude/skills para no duplicar enlaces.
 - [ ] agents: evaluar servidores MCP HTTP compartidos para no multiplicar procesos stdio por sesión.
