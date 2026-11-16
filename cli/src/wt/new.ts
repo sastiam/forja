@@ -1,11 +1,11 @@
 import { existsSync } from "node:fs";
 import { join, normalize } from "node:path";
 import { parseArgs } from "node:util";
+import { ensureWorktreeIdentity } from "../core/git-identity.ts";
 import { log, out } from "../core/log.ts";
 import { profilePath } from "../core/paths.ts";
-import { loadProfile } from "../core/profile.ts";
+import { loadProfile, type Profile } from "../core/profile.ts";
 import { createRunner, type Runner } from "../core/runners/shell.ts";
-import { enableAgentSigning } from "../core/signing.ts";
 import { type Owner, upsertWorktree, type WorktreeRecord } from "../core/state.ts";
 import { renderEnv } from "./env.ts";
 import { defaultBase, git, gitOk, mainRepoRoot, refExists, worktreePath } from "./git.ts";
@@ -17,8 +17,8 @@ export interface NewOptions {
   base?: string;
   agent?: Owner;
   fetch?: boolean;
-  /** Ruta de la clave privada de firma de agentes (perfil [signing] agent_key). */
-  signingKey?: string;
+  /** Perfil local: de él salen la identidad por repo ([git]) y la clave de agentes ([signing]). */
+  profile?: Pick<Profile, "git" | "signing"> | null;
 }
 
 /** Crea un worktree. Los mensajes van a stderr; devuelve el registro. */
@@ -47,15 +47,10 @@ export async function createWorktree(
     await gitOk(runner, repo, ["worktree", "add", path, branch], true);
   else await gitOk(runner, repo, ["worktree", "add", "-b", branch, path, base], true);
 
-  if (owner !== "human") {
-    if (o.signingKey) {
-      log.step("firma ssh de agentes (solo este worktree)");
-      await enableAgentSigning(runner, repo, path, o.signingKey);
-    } else
-      log.warn(
-        "sin [signing] agent_key en el perfil: los commits de este agente irán SIN firmar (ver docs/guide/firma.md)",
-      );
-  }
+  const ensured = await ensureWorktreeIdentity(runner, repo, path, owner, o.profile);
+  if (ensured.identity) log.step(`identidad de git del repo: ${ensured.identity.email}`);
+  if (ensured.agentSigned) log.step("firma ssh de agentes (solo este worktree)");
+  for (const w of ensured.warnings) log.warn(w);
 
   const project = await loadProject(repo);
   const include = [...(await loadWorktreeInclude(repo)), ...project.copy];
@@ -127,7 +122,7 @@ export async function wtNew(argv: string[]): Promise<number> {
   const runner = createRunner(false);
   const profile = await loadProfile(profilePath()).catch(() => null);
   const rec = await createWorktree(runner, process.cwd(), {
-    signingKey: profile?.signing.agent_key,
+    profile,
     branch,
     base: values.base,
     agent: agent as Owner | undefined,

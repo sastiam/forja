@@ -4,6 +4,7 @@ import { backlogCommand } from "./commands/backlog.ts";
 import { captureCommand } from "./commands/capture.ts";
 import { doctorCommand } from "./commands/doctor.ts";
 import { driftCommand } from "./commands/drift.ts";
+import { gitCommand } from "./commands/git.ts";
 import { moduleCommand } from "./commands/module.ts";
 import { planCommand } from "./commands/plan.ts";
 import { reportCommand } from "./commands/report.ts";
@@ -23,6 +24,7 @@ const HELP = `forja — provisionamiento de estaciones de desarrollo
   forja capture [módulo] [--yes] [--json]  Pasa al repo paquetes y archivos cambiados en la máquina
   forja doctor [--json] [--fix]        Diagnóstico de módulos y salud (--fix: con Claude, skill mac-doctor)
   forja module ls | info <módulo>
+  forja git identity apply|check       Identidad y firma de git por repo (excepciones a la global)
   forja wt new|ls|rm|prune|init-project …   Worktrees (ver: forja wt --help)
   forja sandbox-check [--host h]… [--json] [--inside-loop]  Comprobación previa de un loop (ejecutar dentro del sandbox)
   forja awake on|off|status            No dormir al cerrar la tapa (loops largos; ver --help)
@@ -41,6 +43,7 @@ const commands: Record<string, (argv: string[]) => Promise<number>> = {
   doctor: doctorCommand,
   module: moduleCommand,
   wt: wtCommand,
+  git: gitCommand,
   backlog: backlogCommand,
   report: reportCommand,
   awake: awakeCommand,
