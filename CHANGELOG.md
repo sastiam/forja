@@ -13,6 +13,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 - `wt night` corre el agente **dentro del sandbox de Claude Code** (ADR 0013). Escribe un settings por noche (`~/.local/state/forja/night/`), se lo pasa a openspec-cascade con `--settings` y comprueba el entorno real del agente con una sesión corta de `claude -p` que ejecuta `forja sandbox-check --inside-loop`. `--no-sandbox` lo desactiva de forma explícita.
 
+- `runtimes`: mise instala el CLI de OpenSpec (`npm:@fission-ai/openspec`), del que dependen openspec-cascade y su ciclo (`openspec new change`, `archive`). `looper` lo comprueba con `openspec --version`.
+
 - `wt night` ejecuta `openspec-cascade spec-gate check --stage review --changes <lista>` en las comprobaciones previas y aborta, sin crear el worktree, si no sale 0. La skill `night-run` lo documenta.
 
 ### Changed
