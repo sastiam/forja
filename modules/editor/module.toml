@@ -1,5 +1,5 @@
 name = "editor"
-summary = "Zed con vtsls y Biome"
+summary = "Zed con tsgo, vtsls y Biome"
 os = ["darwin", "linux"]
 depends = ["core"]
 targets = ["~/.config/zed"]
