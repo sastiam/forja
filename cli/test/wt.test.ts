@@ -66,11 +66,7 @@ test("wt new/ls/rm: ciclo completo en un repo temporal", async () => {
   assert.equal(rows.find((r) => r.branch === "feat/login")?.owner, "human");
 
   // sucio → rechaza; con --force elimina
-  assert.equal(
-    rows.find((r) => r.branch === "feat/login")?.dirty,
-    true,
-    "setup.txt y .env.worktree sin commit",
-  );
+  assert.equal(rows.find((r) => r.branch === "feat/login")?.dirty, true, "setup.txt sin commit");
   await assert.rejects(() => removeSafely(runner, repo, "feat/login", false), /cambios sin commit/);
   await removeSafely(runner, repo, "feat/login", true);
   assert.ok(!existsSync(rec.path));
@@ -96,8 +92,7 @@ test("wt prune --merged elimina fusionados y limpia huérfanos; respeta sucios",
   const dirty = await createWorktree(runner, repo, { branch: "merged-2", fetch: false });
   writeFileSync(join(dirty.path, "wip.txt"), "x");
   sh(repo, "git", ["worktree", "list"]);
-  // ambos están fusionados (misma punta que main); .env.worktree es untracked → sucio también
-  sh(merged.path, "rm", ["-f", ".env.worktree"]);
+  // ambos están fusionados (misma punta que main); .env.worktree está excluido → no ensucia
   const dry = await prune(runner, repo, { merged: true, dryRun: true });
   assert.deepEqual(dry.removed, [merged.path]);
   assert.ok(existsSync(merged.path), "dry-run no borra");
@@ -117,7 +112,6 @@ test("wt rm rechaza commits sin push", async () => {
   isolateState();
   const repo = makeRepo();
   const rec = await createWorktree(runner, repo, { branch: "con-commit", fetch: false });
-  sh(rec.path, "rm", [".env.worktree"]);
   writeFileSync(join(rec.path, "f.txt"), "1");
   sh(rec.path, "git", ["add", "f.txt"]);
   sh(rec.path, "git", [
@@ -131,6 +125,17 @@ test("wt rm rechaza commits sin push", async () => {
     "x",
   ]);
   await assert.rejects(() => removeSafely(runner, repo, "con-commit", false), /sin push/);
+});
+
+test("wt new excluye .env.worktree en el repo (una vez) para que no ensucie el worktree", async () => {
+  isolateState();
+  const repo = makeRepo();
+  const a = await createWorktree(runner, repo, { branch: "uno", fetch: false });
+  await createWorktree(runner, repo, { branch: "dos", fetch: false });
+  assert.ok(existsSync(join(a.path, ".env.worktree")));
+  assert.equal(sh(a.path, "git", ["status", "--porcelain"]), "");
+  const exclude = readFileSync(join(repo, ".git", "info", "exclude"), "utf8");
+  assert.equal(exclude.split("\n").filter((l) => l === ".env.worktree").length, 1);
 });
 
 test("wt init-project no sobrescribe archivos existentes", async () => {

@@ -12,7 +12,7 @@ import { battery, withAwake } from "../core/power.ts";
 import { loadProfile, type Profile } from "../core/profile.ts";
 import { commandExists, createRunner, type Runner } from "../core/runners/shell.ts";
 import { logsDir } from "../core/state.ts";
-import { mainRepoRoot } from "./git.ts";
+import { defaultBase, mainRepoRoot } from "./git.ts";
 import { createWorktree } from "./new.ts";
 import {
   insidePreflight,
@@ -31,6 +31,11 @@ export interface NightOpts {
   hosts: string[];
   /** Sesiones del agente dentro del sandbox de Claude Code (por defecto; `--no-sandbox` lo quita). */
   sandbox: boolean;
+  /**
+   * Rama de la que sale el worktree nuevo. Con base, los changes se buscan en esa rama;
+   * sin ella (worktree reutilizado), en el directorio que recibe `preflight`.
+   */
+  base?: string;
 }
 
 export interface Preflight {
@@ -39,9 +44,28 @@ export interface Preflight {
   detail?: string;
 }
 
+const tasksPath = (change: string): string => `openspec/changes/${change}/tasks.md`;
+
 /** Changes de OpenSpec que no existen en el repo (`openspec/changes/<nombre>/tasks.md`). */
 export function missingChanges(repo: string, changes: string[]): string[] {
-  return changes.filter((c) => !existsSync(join(repo, "openspec", "changes", c, "tasks.md")));
+  return changes.filter((c) => !existsSync(join(repo, tasksPath(c))));
+}
+
+/** Changes cuyo `tasks.md` no está commiteado en `ref`: lo que verá el worktree que sale de ahí. */
+export async function missingChangesAt(
+  runner: Runner,
+  repo: string,
+  ref: string,
+  changes: string[],
+): Promise<string[]> {
+  const missing: string[] = [];
+  for (const c of changes) {
+    const r = await runner.query("git", ["cat-file", "-e", `${ref}:${tasksPath(c)}`], {
+      cwd: repo,
+    });
+    if (r.code !== 0) missing.push(c);
+  }
+  return missing;
 }
 
 /** Argumentos de openspec-cascade. Los logs van a ~/.local/state/forja/logs/night. */
@@ -106,11 +130,16 @@ export async function preflight(
       detail: "versión antigua: forja apply looper",
     });
   }
-  const missing = missingChanges(repo, o.changes);
+  const missing = o.base
+    ? await missingChangesAt(runner, repo, o.base, o.changes)
+    : missingChanges(repo, o.changes);
+  const where = o.base
+    ? `no están commiteados en ${o.base}: ${missing.join(", ")} (commitéalos o usa --base <rama>)`
+    : `no existen: ${missing.join(", ")}`;
   p.push({
     name: "changes de OpenSpec",
     ok: o.changes.length > 0 && missing.length === 0,
-    detail: o.changes.length ? `no existen: ${missing.join(", ")}` : "usa --changes a,b",
+    detail: o.changes.length ? where : "usa --changes a,b",
   });
   // Solo si los changes existen: si no, el fallo ya está dicho arriba.
   if (o.changes.length > 0 && missing.length === 0) {
@@ -163,16 +192,18 @@ async function notify(profile: Profile | null, message: string): Promise<void> {
 }
 
 const HELP =
-  "uso: forja wt night --changes a,b [--engine claude|opencode|antigravity] [--branch nombre] [--full-gate] [--allow-battery] [--host h]… [--no-sandbox] [--dry-run]";
+  "uso: forja wt night --changes a,b [--engine claude|opencode|antigravity] [--branch nombre] [--base rama] [--full-gate] [--allow-battery] [--host h]… [--no-sandbox] [--dry-run]";
 
 export async function wtNight(argv: string[]): Promise<number> {
   const { values } = parseArgs({
     args: argv,
-    allowPositionals: true,
+    // Sin posicionales: un `-- --flag` para openspec-cascade se descartaría en silencio.
+    allowPositionals: false,
     options: {
       changes: { type: "string" },
       engine: { type: "string" },
       branch: { type: "string" },
+      base: { type: "string" },
       "full-gate": { type: "boolean" },
       "allow-battery": { type: "boolean" },
       host: { type: "string", multiple: true },
@@ -202,18 +233,23 @@ export async function wtNight(argv: string[]): Promise<number> {
   const repo = await mainRepoRoot(runner, process.cwd());
   const profile = await loadProfile(profilePath()).catch(() => null);
 
-  // 1. Comprobaciones previas: nada se crea si alguna falla.
-  const pre = await preflight(runner, repo, o);
+  // 1. Comprobaciones previas: nada se crea si alguna falla. Los changes se buscan
+  //    donde trabajará el agente: el worktree reutilizado o la rama base del nuevo.
+  const existing = await findWorktree(runner, repo, `agent/${o.branch}`);
+  if (existing && values.base)
+    log.warn(`--base ignorado: se reutiliza el worktree existente ${existing.path}`);
+  o.base = existing ? undefined : (values.base ?? (await defaultBase(runner, repo)));
+  const pre = await preflight(runner, existing?.path ?? repo, o);
   for (const x of pre) out(`${x.ok ? "✔" : "✖"} ${x.name}${x.detail ? ` — ${x.detail}` : ""}`);
   if (pre.some((x) => !x.ok)) return 1;
 
   // 2. Worktree de agente (rama agent/…, firma ssh por worktree) o reutiliza el existente.
-  const existing = await findWorktree(runner, repo, `agent/${o.branch}`);
   const path = existing
     ? existing.path
     : (
         await createWorktree(runner, repo, {
           branch: o.branch,
+          base: o.base,
           agent: "night",
           profile,
         })
