@@ -21,4 +21,4 @@
 - [ ] Rust: módulo opcional con sccache (CARGO_INCREMENTAL=0) si el uso deja de ser ocasional.
 
 ## Inbox
-- [ ] 2026-11-16 editor: tras instalar la Nerd Font (cask font-jetbrains-mono-nerd-font), macOS no la registra y Zed no la lista (Font Book tampoco la ve). Reiniciar la base de datos y la caché de fuentes de macOS (evaluar atsutil databases -remove, reinicio de fontd y cierre de sesión) y automatizarlo en apply del módulo editor, o avisarlo en doctor. Quitar la cuarentena de los .ttf no bastó.
+- [ ] 2026-11-16 editor: tras instalar la Nerd Font (cask font-jetbrains-mono-nerd-font), macOS no la registra y Zed no la lista (Font Book tampoco la ve), así que el terminal de Zed muestra `?` en los iconos de starship. Confirmado: limpiar la base de datos y la caché de fuentes de macOS lo arregla. Quitar la cuarentena de los .ttf y volver a añadirlos desde Font Book no bastó. Falta anotar el comando exacto que se usó (evaluar atsutil databases -remove, reinicio de fontd o cierre de sesión), automatizarlo en apply del módulo editor tras instalar el cask, o avisarlo en doctor.
