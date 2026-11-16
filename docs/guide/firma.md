@@ -20,7 +20,7 @@ gh ssh-key add ~/.config/forja/agent-signing.pub --type signing --title "forja a
 
 ## 2b. Indicar la clave en tu perfil local
 
-En `~/.config/forja/local/profile.toml` (nunca en el repo):
+En `~/.config/forja/profile.toml` (nunca en el repo):
 
 ```toml
 [signing]
@@ -47,7 +47,7 @@ Solo desde CI, al empujar una etiqueta `v*.*.*`: permisos `id-token: write` y `a
 
 ## 6. Identidad y firma por repo (ADR 0014)
 
-Tu config global de git es la laboral y manda por defecto. Los repos personales son excepciones que se declaran en `~/.config/forja/local/profile.toml`:
+Tu config global de git es la laboral y manda por defecto. Los repos personales son excepciones que se declaran en `~/.config/forja/profile.toml`:
 
 ```toml
 [git.identities.personal]
