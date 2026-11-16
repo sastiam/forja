@@ -64,6 +64,14 @@ export function cascadeArgs(
   ];
 }
 
+/** Líneas finales de la salida del spec-gate que se muestran al fallar. */
+const GATE_DETAIL_LINES = 3;
+
+/** Gate de specs antes de lanzar: cualquier código distinto de 0 aborta la noche. */
+export function specGateArgs(changes: string[]): string[] {
+  return ["spec-gate", "check", "--stage", "review", "--changes", changes.join(",")];
+}
+
 /** Rama por defecto: agent/night-<primer change>-<AAAAMMDD>. */
 export function defaultBranch(changes: string[], now = new Date()): string {
   const d = now.toISOString().slice(0, 10).replaceAll("-", "");
@@ -103,6 +111,15 @@ export async function preflight(
     ok: o.changes.length > 0 && missing.length === 0,
     detail: o.changes.length ? `no existen: ${missing.join(", ")}` : "usa --changes a,b",
   });
+  // Solo si los changes existen: si no, el fallo ya está dicho arriba.
+  if (o.changes.length > 0 && missing.length === 0) {
+    const gate = await runner.query(LOOPER_BIN, specGateArgs(o.changes), { cwd: repo });
+    p.push({
+      name: "spec-gate (review)",
+      ok: gate.code === 0,
+      detail: `salió con ${gate.code}: ${(gate.stderr || gate.stdout).trim().split("\n").slice(-GATE_DETAIL_LINES).join(" | ")}`,
+    });
+  }
   if (platform === "darwin") {
     const b = await battery(runner);
     p.push({
