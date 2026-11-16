@@ -35,7 +35,8 @@ export async function gitCommand(argv: string[]): Promise<number> {
     options: { repo: { type: "string" }, "dry-run": { type: "boolean" } },
   });
   const runner = createRunner(values["dry-run"] === true);
-  const profile = await loadProfile(profilePath()).catch(() => null);
+  const profile = await loadProfile(profilePath());
+  if (!profile) throw new Error(`no hay perfil en ${profilePath()} (forja setup)`);
   const repo = await mainRepoRoot(runner, values.repo ? expandHome(values.repo) : process.cwd());
   const identity = identityFor(profile, repo);
   if (!identity) {
