@@ -18,6 +18,8 @@ export const PLUGINS: Record<string, string> = {
   "quality-guard@forja": "números mágicos y guard de AWS fuera de Floci",
   "aws-core@agent-toolkit-for-aws": "skills y MCP oficiales de AWS (incluye Well-Architected)",
   "codebase-memory@codebase-memory": "grafo de código local (MCP) para buscar con menos tokens",
+  "egm@egm": "revisión de specs con revisores Goldfish (EGM); la usa openspec-cascade",
+  "cascade@openspec-cascade": "comandos cascade-spec-* (EGM + spec-gate) y skills de openspec-cascade",
 };
 
 export function marketplaces(root: string): Record<string, MarketplaceSource> {
@@ -25,6 +27,10 @@ export function marketplaces(root: string): Record<string, MarketplaceSource> {
     forja: { source: "directory", path: join(root, "plugins") },
     "agent-toolkit-for-aws": { source: "github", repo: "aws/agent-toolkit-for-aws" },
     "codebase-memory": { source: "github", repo: "DeusData/codebase-memory-mcp" },
+    egm: { source: "github", repo: "google/elephant-goldfish-model" },
+    // Desde GitHub (main), no desde ~/.local/share/openspec-cascade: esa carpeta es
+    // un repo de desarrollo y el plugin cambiaría con la rama que tenga activa.
+    "openspec-cascade": { source: "github", repo: "sastiam/openspec-cascade" },
   };
 }
 
