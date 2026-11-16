@@ -1,7 +1,7 @@
 # Backlog
 
 ## Por evaluar
-- [ ] editor: volver a probar tsgo en Zed cuando se corrija el watcher recursivo sobre symlinks de pnpm.
+- [x] editor: tsgo en Zed. Probado en un monorepo pnpm con la extensión `tsgo` (servidor `typescript-ls`): 0,0–0,1 % de CPU en reposo y unos 814 MiB, sin rastro del bug de watchers con symlinks. Activado para TypeScript y TSX; falta medir la línea base de vtsls y la CPU al editar.
 - [x] containers: benchmark Colima vs OrbStack descartado; OrbStack fuera (actualización de ADR 0007).
 - [ ] agents: confirmar si OpenCode lee ~/.claude/skills para no duplicar enlaces.
 - [ ] agents: evaluar servidores MCP HTTP compartidos para no multiplicar procesos stdio por sesión.
