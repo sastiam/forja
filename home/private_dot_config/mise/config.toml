@@ -5,7 +5,10 @@ python = "3.13"
 uv = "latest"
 bun = "latest"       # openspec-cascade (módulo looper) pide Bun 1.4+
 rust = "stable"      # uso ocasional; sin target-dir compartido, sin sccache por defecto
-"npm:@fission-ai/openspec" = "latest"   # CLI `openspec`; lo usa openspec-cascade (módulo looper)
+"npm:@fission-ai/openspec" = "2.0.0"    # CLI `openspec` de openspec-cascade (módulo looper)
+
+[env]
+OPENSPEC_TELEMETRY = "0"   # sin telemetría ni comprobación de versión; manda sobre `openspec config`
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"]   # respeta .nvmrc / .node-version
