@@ -1,7 +1,7 @@
 name = "agents"
 summary = "Claude Code (sandbox), OpenCode, Hermes y skills enlazadas"
 os = ["darwin", "linux"]
-depends = ["core", "git"]
+depends = ["core", "git", "runtimes"]
 targets = ["~/.claude", "~/.config/opencode"]
 risk = "medium"
 requires_sudo = false

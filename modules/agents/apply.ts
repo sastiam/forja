@@ -13,6 +13,7 @@ import {
   unknownSkips,
 } from "../../cli/src/core/claude-plugins.ts";
 import { log } from "../../cli/src/core/log.ts";
+import { installSkills, skillsAction, skillsCheck } from "../../cli/src/core/openspec-skills.ts";
 import { expandHome } from "../../cli/src/core/paths.ts";
 import {
   type Action,
@@ -24,8 +25,8 @@ import { confirm, isInteractive } from "../../cli/src/core/prompt.ts";
 import * as chezmoi from "../../cli/src/core/runners/chezmoi.ts";
 import { commandExists, type Runner } from "../../cli/src/core/runners/shell.ts";
 
-// VERIFICAR: ruta global de skills de OpenCode (¿~/.config/opencode/skills?) y si OpenCode
-// ya lee ~/.claude/skills; en ese caso NO enlazar dos veces. Ver BACKLOG.md.
+// OpenCode lee ~/.claude/skills como fuente global de compatibilidad
+// (https://opencode.ai/docs/skills/), así que las skills se enlazan solo ahí.
 const CLAUDE_SKILLS = "~/.claude/skills";
 const CLAUDE_SETTINGS = "~/.claude/settings.json";
 
@@ -99,6 +100,7 @@ export async function plan(ctx: ModuleCtx): Promise<Action[]> {
     description: `enlazar skills en ${CLAUDE_SKILLS}${missing.length ? ` (faltan: ${missing.join(", ")})` : ""}`,
     pending: missing.length > 0,
   });
+  actions.push(await skillsAction(ctx.runner));
   const missingP = await missingPlugins(ctx);
   actions.push({
     kind: "step",
@@ -125,6 +127,7 @@ export async function apply(ctx: ModuleCtx): Promise<void> {
   }
   for (const s of await skillDirs(ctx.root))
     await runner.link(join(ctx.root, "skills", s), join(expandHome(CLAUDE_SKILLS), s));
+  await installSkills(runner);
   await installPlugins(ctx);
 
   if (!(await commandExists(runner, "hermes"))) {
@@ -251,6 +254,7 @@ export async function check(ctx: ModuleCtx): Promise<CheckResult[]> {
       ok: missing.length === 0,
       detail: missing.length ? `faltan ${missing.join(", ")}` : undefined,
     },
+    await skillsCheck(ctx.runner),
     ...(await opencodeChecks(ctx.runner)),
     ...(await hermesChecks(ctx.runner)),
     ...(await pluginChecks(ctx)),

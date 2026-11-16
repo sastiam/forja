@@ -16,6 +16,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 - `runtimes`: mise instala el CLI de OpenSpec (`npm:@fission-ai/openspec`, fijado a 2.0.0, con `OPENSPEC_TELEMETRY=0` en `[env]`), del que dependen openspec-cascade y su ciclo (`openspec new change`, `archive`). `looper` lo comprueba con `openspec --version`.
 
+- `agents`: instala las skills de OpenSpec (`openspec-propose`, `-apply-change`, `-archive-change`…) en `~/.claude/skills`, generadas con `openspec init` a la versión fijada; Claude Code y OpenCode las leen de ahí. `doctor` avisa si faltan o si su `generatedBy` no coincide con `openspec --version` (arreglo: `forja apply agents`).
 - `wt night` ejecuta `openspec-cascade spec-gate check --stage review --changes <lista>` en las comprobaciones previas y aborta, sin crear el worktree, si no sale 0. La skill `night-run` lo documenta.
 
 ### Changed
