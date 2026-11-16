@@ -151,6 +151,14 @@ test("quality-guard: interpreta biome y ruff y filtra por las líneas editadas",
   assert.equal(quality.linterFor("x.tsx"), "biome");
 });
 
+test("token-saver: no reescribe en modo auto (la revisión del clasificador dejaría de valer)", () => {
+  assert.equal(saver.rewriteAllowed("auto"), false);
+  assert.equal(saver.rewriteAllowed("default"), true);
+  assert.equal(saver.rewriteAllowed("acceptEdits"), true);
+  assert.equal(saver.rewriteAllowed(null), true);
+  assert.equal(saver.rewriteAllowed(undefined), true);
+});
+
 test("token-saver: decide cuándo preguntar a rtk e interpreta su respuesta", () => {
   assert.equal(saver.shouldTry("git status"), true);
   assert.equal(saver.shouldTry("rtk git status"), false);

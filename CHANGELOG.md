@@ -24,6 +24,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - `editor`: TypeScript y TSX usan tsgo (extensión `tsgo`, servidor `typescript-ls`) en lugar de vtsls, que sigue para JavaScript. La plantilla deja de excluir `typescript-ls` en esos lenguajes y declara `auto_install_extensions` (`html`, `tsgo` y los temas). Probado en un monorepo pnpm sin el bug de watchers.
 
 ### Fixed
+- `token-saver`: en modo auto ya no reescribe los comandos de Bash con `rtk`. El clasificador revisa en el servidor el comando tal como lo escribió el modelo, y la reescritura invalidaba esa revisión: cada llamada se rechazaba una vez y los subagentes no podían usar git. El modo se lee del `permission_mode` de los eventos clásicos (inicio de sesión, cada prompt y cada herramienta), así que sigue a un cambio con shift+tab.
 - `wt night`: el agente corría sin sandbox (openspec-cascade solo carga los ajustes del proyecto) y `sandbox-check` se ejecutaba fuera del sandbox, así que salía en verde aunque dentro fuera a fallar.
 - `~/.claude/CLAUDE.md` solo pide usar `op://` y `op run` si el perfil tiene `[secrets] provider = "1password"`; con `"none"` la regla se queda en no leer ni escribir secretos.
 - `settings.json` ya no pierde el tema que guarda `/config`: el perfil admite `[claude] theme` y la plantilla lo escribe solo si está definido.

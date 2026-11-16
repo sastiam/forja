@@ -5,6 +5,7 @@ import {
   hasCodebaseMemory,
   interpretRewrite,
   parseGain,
+  rewriteAllowed,
   SEARCH_SECTION,
   shouldTry,
 } from "./logic.js";
@@ -16,7 +17,8 @@ const REFRESH_EVERY_MS = 60_000;
 const saved = atom({ plugin: "token-saver", key: "saved" } as const, null as number | null);
 const percent = atom({ plugin: "token-saver", key: "percent" } as const, null as number | null);
 const refreshedAt = atom({ plugin: "token-saver", key: "refreshedAt" } as const, 0);
-
+/** Último modo de permisos visto en un evento clásico (`permission_mode`). */
+const mode = atom({ plugin: "token-saver", key: "permissionMode" } as const, null as string | null);
 /** Relee el ahorro de rtk (como mucho una vez por minuto) y el contexto usado. */
 async function refresh($: EngineInterface, force: boolean): Promise<void> {
   const usage = await $.session.usage();
@@ -36,9 +38,24 @@ async function refresh($: EngineInterface, force: boolean): Promise<void> {
 }
 
 export const register: Register = (on, options) => {
-  if (options.rtk !== false)
+  if (options.rtk !== false) {
+    // El modo puede cambiar a mitad de sesión (shift+tab): se relee en cada prompt y herramienta.
+    on("classic.SessionStart", async ($, e, next) => {
+      await update($, mode, () => e.permission_mode ?? null);
+      return next(e);
+    });
+    on("classic.UserPromptSubmit", async ($, e, next) => {
+      await update($, mode, () => e.permission_mode ?? null);
+      return next(e);
+    });
+    on("classic.PostToolUse", async ($, e, next) => {
+      await update($, mode, () => e.permission_mode ?? null);
+      return next(e);
+    });
+
     on("tool.call", { tool: "Bash" }, async ($, e, next) => {
       if (e.tool !== "Bash" || !shouldTry(e.command)) return next(e);
+      if (!rewriteAllowed(await read($, mode))) return next(e);
       try {
         const r = await $.process.run(["rtk", "rewrite", e.command], {
           timeoutMs: REWRITE_TIMEOUT_MS,
@@ -49,6 +66,7 @@ export const register: Register = (on, options) => {
         return next(e); // rtk no instalado o lento: el comando original
       }
     }).catch(($, e, next) => next(e));
+  }
 
   if (options.search_hint !== false)
     on("prompt.compose", async ($, e, next) => {

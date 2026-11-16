@@ -18,6 +18,18 @@ export function shouldTry(command: string): boolean {
   );
 }
 
+/**
+ * En modo auto el clasificador revisa en el servidor el comando tal como lo escribió el
+ * modelo; si un hook lo reescribe después, la revisión deja de cubrirlo y la llamada se
+ * rechaza. En ese modo no se reescribe.
+ */
+const AUTO_MODE = "auto";
+
+/** ¿Se puede reescribir el comando en este modo de permisos? (desconocido: sí) */
+export function rewriteAllowed(permissionMode: string | null | undefined): boolean {
+  return permissionMode !== AUTO_MODE;
+}
+
 /** Comando reescrito por `rtk rewrite`, o undefined si rtk no lo cubre. */
 export function interpretRewrite(
   exitCode: number,

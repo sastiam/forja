@@ -15,6 +15,38 @@ test("reescribe con rtk cuando rtk tiene equivalente", async ($, on) => {
   expect(ran).toBe("rtk git status");
 });
 
+test("en modo auto no reescribe: el clasificador ya revisó el comando original", async ($, on) => {
+  let ran = "";
+  let asked = false;
+  on("process.run", () => {
+    asked = true;
+    return run(0, "rtk git status\n");
+  });
+  on("classic.UserPromptSubmit", () => ({}));
+  on("tool.call", (_, e) => {
+    if (e.tool === "Bash") ran = e.command;
+    return { result: {} };
+  });
+  await $.classic.UserPromptSubmit({ prompt: "hola", permission_mode: "auto" });
+  await $.tool.call({ tool: "Bash", command: "git status" });
+  expect(ran).toBe("git status");
+  expect(asked).toBe(false);
+});
+
+test("al salir del modo auto vuelve a reescribir", async ($, on) => {
+  let ran = "";
+  on("process.run", (_, e) => (e.argv[1] === "rewrite" ? run(0, "rtk git status\n") : run(1, "")));
+  on("classic.UserPromptSubmit", () => ({}));
+  on("tool.call", (_, e) => {
+    if (e.tool === "Bash") ran = e.command;
+    return { result: {} };
+  });
+  await $.classic.UserPromptSubmit({ prompt: "hola", permission_mode: "auto" });
+  await $.classic.UserPromptSubmit({ prompt: "otra", permission_mode: "default" });
+  await $.tool.call({ tool: "Bash", command: "git status" });
+  expect(ran).toBe("rtk git status");
+});
+
 test("deja el comando si rtk no lo cubre", async ($, on) => {
   let ran = "";
   on("process.run", () => run(1, ""));
