@@ -1,6 +1,7 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { claudeAvailable, runClaudeInteractive, skillPrompt } from "../core/claude.ts";
+import { claudeSandbox } from "../core/claude-sandbox.ts";
 import { load } from "../core/context.ts";
 import { log, out, outJson } from "../core/log.ts";
 import { expandHome } from "../core/paths.ts";
@@ -62,6 +63,33 @@ export async function systemChecks(runner: Runner, platform: string): Promise<Fi
   return f;
 }
 
+/** El sandbox que hay en ~/.claude/settings.json debe coincidir con el que piden host y perfil. */
+export function sandboxFinding(
+  wanted: boolean,
+  settingsPath = expandHome("~/.claude/settings.json"),
+): Finding {
+  const name = "claude: sandbox interactivo";
+  let actual: unknown;
+  try {
+    actual = (JSON.parse(readFileSync(settingsPath, "utf8")) as { sandbox?: { enabled?: unknown } })
+      .sandbox?.enabled;
+  } catch {
+    return { name, status: "skip", detail: "sin ~/.claude/settings.json legible" };
+  }
+  const now = actual === true;
+  return now === wanted
+    ? {
+        name,
+        status: "ok",
+        detail: wanted ? "activo" : "desactivado (wt night lo exige igualmente)",
+      }
+    : {
+        name,
+        status: "warn",
+        detail: `settings.json lo tiene ${now ? "activo" : "desactivado"} y el host/perfil piden ${wanted ? "activo" : "desactivado"} (forja apply agents)`,
+      };
+}
+
 export async function collectFindings(): Promise<Finding[]> {
   const findings: Finding[] = [];
   let loaded: Awaited<ReturnType<typeof load>> | null = null;
@@ -72,6 +100,7 @@ export async function collectFindings(): Promise<Finding[]> {
   }
   if (loaded) {
     const { ctx, all, order } = loaded;
+    findings.push(sandboxFinding(claudeSandbox(ctx.host, ctx.profile, ctx.enabled).enabled));
     const agentKey = ctx.profile.signing.agent_key;
     if (agentKey) findings.push(...(await signingFindings(ctx.runner, agentKey, ctx.platform)));
     for (const name of order) {

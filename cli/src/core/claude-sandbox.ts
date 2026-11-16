@@ -11,6 +11,8 @@ export const RTK_DATA_DIR: Record<string, string> = {
 };
 
 export interface ClaudeSandbox {
+  /** Sandbox de las sesiones interactivas: perfil > host > true. `wt night` siempre lo activa (ADR 0015). */
+  enabled: boolean;
   allowed_domains: string[];
   allow_read: string[];
   allow_write: string[];
@@ -28,6 +30,7 @@ export function claudeSandbox(
 ): ClaudeSandbox {
   const uniq = (xs: string[]) => [...new Set(xs)];
   return {
+    enabled: profile.claude.sandbox ?? host.claude.sandbox ?? true,
     allowed_domains: uniq([...host.claude.allowed_domains, ...profile.claude.allowed_domains]),
     allow_read: uniq([
       ...(enabled.includes("git") ? [GIT_LOCAL_CONFIG] : []),

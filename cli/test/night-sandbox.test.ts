@@ -19,6 +19,7 @@ interface Sbx {
 }
 
 const base = {
+  enabled: true,
   allowed_domains: ["github.com", "api.github.com"],
   allow_read: ["~/.config/forja/local/git.local.gitconfig"],
   allow_write: ["~/Library/Application Support/rtk"],

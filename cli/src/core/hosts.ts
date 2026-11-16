@@ -10,7 +10,7 @@ export interface Host {
   arch: string;
   modules: string[];
   /** Ajustes de Claude Code comunes a todas las máquinas de este tipo. */
-  claude: { allowed_domains: string[] };
+  claude: { allowed_domains: string[]; sandbox?: boolean };
 }
 
 export async function loadHost(root: string, name: string): Promise<Host> {
@@ -22,7 +22,7 @@ export async function loadHost(root: string, name: string): Promise<Host> {
   }
   const t = parse(text);
   const list = t.modules;
-  const claude = (t.claude ?? {}) as { allowed_domains?: unknown };
+  const claude = (t.claude ?? {}) as { allowed_domains?: unknown; sandbox?: unknown };
   return {
     name: String(t.name ?? name),
     status: t.status === "planned" ? "planned" : "supported",
@@ -33,6 +33,7 @@ export async function loadHost(root: string, name: string): Promise<Host> {
       allowed_domains: Array.isArray(claude.allowed_domains)
         ? claude.allowed_domains.map(String)
         : [],
+      ...(typeof claude.sandbox === "boolean" ? { sandbox: claude.sandbox } : {}),
     },
   };
 }
