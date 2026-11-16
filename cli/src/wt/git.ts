@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import type { Runner } from "../core/runners/shell.ts";
 
@@ -72,6 +73,24 @@ export async function defaultBase(runner: Runner, repo: string): Promise<string>
   for (const ref of ["origin/main", "main", "origin/master", "master"])
     if (await refExists(runner, repo, ref)) return ref;
   return "HEAD";
+}
+
+/**
+ * Añade `pattern` al `info/exclude` del repo si aún no está. Ese archivo es local
+ * (no se versiona) y lo comparten todos los worktrees del repo.
+ */
+export async function ensureExcluded(runner: Runner, repo: string, pattern: string): Promise<void> {
+  const file = await gitOk(runner, repo, [
+    "rev-parse",
+    "--path-format=absolute",
+    "--git-path",
+    "info/exclude",
+  ]);
+  const current = existsSync(file) ? readFileSync(file, "utf8") : "";
+  if (current.split("\n").some((l) => l.trim() === pattern)) return;
+  const sep = current === "" || current.endsWith("\n") ? "" : "\n";
+  await runner.mkdirp(dirname(file));
+  await runner.writeFile(file, `${current}${sep}${pattern}\n`);
 }
 
 export const worktreePath = (repo: string, slug: string): string =>

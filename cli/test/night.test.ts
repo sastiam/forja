@@ -10,9 +10,11 @@ import {
   cascadeArgs,
   defaultBranch,
   missingChanges,
+  missingChangesAt,
   type NightOpts,
   preflight,
   specGateArgs,
+  wtNight,
 } from "../src/wt/night.ts";
 import { tmp } from "./helpers.ts";
 
@@ -61,6 +63,43 @@ test("missingChanges detecta changes sin tasks.md", () => {
   assert.deepEqual(missingChanges(repoWith("a"), ["a", "b"]), ["b"]);
 });
 
+/** Código con el que sale git cuando el objeto no existe (fatal). */
+const GIT_FATAL_EXIT = 128;
+
+/** Runner falso cuyo `git cat-file -e <ref>:<ruta>` solo encuentra las rutas de `present`. */
+const refWith = (...present: string[]) =>
+  createFakeRunner((cmd, args) =>
+    cmd === "git" && args[0] === "cat-file"
+      ? { code: present.some((p) => args[2]?.endsWith(`:${p}`)) ? 0 : GIT_FATAL_EXIT }
+      : { code: 0 },
+  );
+
+test("missingChangesAt busca tasks.md en la rama base, no en el checkout", async () => {
+  const runner = refWith("openspec/changes/a/tasks.md");
+  assert.deepEqual(await missingChangesAt(runner, "/repo", "origin/main", ["a", "b"]), ["b"]);
+  assert.ok(runner.calls.includes("git cat-file -e origin/main:openspec/changes/b/tasks.md"));
+});
+
+test("preflight con base: un change solo presente en el checkout falla y sugiere --base", async () => {
+  const repo = repoWith("a", "b");
+  const p = await preflight(
+    refWith("openspec/changes/a/tasks.md"),
+    repo,
+    opts({ base: "origin/main" }),
+    "linux",
+  );
+  const changes = p.find((x) => x.name === "changes de OpenSpec");
+  assert.equal(changes?.ok, false);
+  assert.match(changes?.detail ?? "", /origin\/main: b/);
+  assert.match(changes?.detail ?? "", /--base/);
+  assert.ok(!p.some((x) => x.name === "spec-gate (review)"));
+});
+
+test("wt night rechaza argumentos que no usa en vez de ignorarlos", async () => {
+  await assert.rejects(() => wtNight(["--changes", "a", "--", "--allow-dirty"]), /--allow-dirty/);
+  await assert.rejects(() => wtNight(["--changes", "a", "extra"]), /extra/);
+});
+
 test("preflight: exige looper, changes existentes y corriente", async () => {
   const repo = repoWith("a", "b");
   const onBattery = createFakeRunner((cmd, args) =>
@@ -100,7 +139,12 @@ test("preflight: spec-gate distinto de 0 aborta; se ejecuta con los changes en o
   assert.equal(p.find((x) => x.name === "spec-gate (review)")?.ok, false);
   assert.deepEqual(calls[0], specGateArgs(["a", "b"]));
   assert.deepEqual(specGateArgs(["a", "b"]), [
-    "spec-gate", "check", "--stage", "review", "--changes", "a,b",
+    "spec-gate",
+    "check",
+    "--stage",
+    "review",
+    "--changes",
+    "a,b",
   ]);
   // Sin changes válidos no se ejecuta el gate.
   const none = await preflight(failing, repo, opts({ changes: ["x"] }), "linux");

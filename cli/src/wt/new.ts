@@ -8,7 +8,15 @@ import { loadProfile, type Profile } from "../core/profile.ts";
 import { createRunner, type Runner } from "../core/runners/shell.ts";
 import { type Owner, upsertWorktree, type WorktreeRecord } from "../core/state.ts";
 import { renderEnv } from "./env.ts";
-import { defaultBase, git, gitOk, mainRepoRoot, refExists, worktreePath } from "./git.ts";
+import {
+  defaultBase,
+  ensureExcluded,
+  git,
+  gitOk,
+  mainRepoRoot,
+  refExists,
+  worktreePath,
+} from "./git.ts";
 import { portFor, slugify } from "./ports.ts";
 import { isSecretPath, loadProject, loadWorktreeInclude } from "./project.ts";
 
@@ -20,6 +28,9 @@ export interface NewOptions {
   /** Perfil local: de él salen la identidad por repo ([git]) y la clave de agentes ([signing]). */
   profile?: Pick<Profile, "git" | "signing"> | null;
 }
+
+/** Variables del worktree (WT_NAME, WT_PORT…). Generado por forja: nunca se commitea. */
+export const WORKTREE_ENV_FILE = ".env.worktree";
 
 /** Crea un worktree. Los mensajes van a stderr; devuelve el registro. */
 export async function createWorktree(
@@ -69,7 +80,7 @@ export async function createWorktree(
 
   const port = portFor(slugify(branch), project.portBase);
   await runner.writeFile(
-    join(path, ".env.worktree"),
+    join(path, WORKTREE_ENV_FILE),
     renderEnv({
       name: slugify(branch),
       port,
@@ -79,6 +90,8 @@ export async function createWorktree(
       floci: project.floci,
     }),
   );
+  // Sin esto, un repo que no lo ignore ve el worktree sucio (openspec-cascade se niega a arrancar).
+  await ensureExcluded(runner, repo, WORKTREE_ENV_FILE);
   for (const cmd of project.setup) {
     log.step(`setup: ${cmd}`);
     const r = await runner.exec("sh", ["-c", cmd], { cwd: path, stream: true });
