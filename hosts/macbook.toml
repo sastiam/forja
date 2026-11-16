@@ -8,4 +8,6 @@ modules = ["core", "shell", "git", "runtimes", "containers", "editor", "terminal
 # Dominios que el sandbox de Claude Code deja salir en todas las máquinas de este tipo.
 # Los personales (empresa, registries privados) van en profile.toml → [claude].
 [claude]
+# Sesiones interactivas sin sandbox (ADR 0015); wt night sigue exigiéndolo. El perfil puede sobrescribirlo.
+sandbox = false
 allowed_domains = ["github.com", "api.github.com"]

@@ -19,6 +19,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - `wt night` ejecuta `openspec-cascade spec-gate check --stage review --changes <lista>` en las comprobaciones previas y aborta, sin crear el worktree, si no sale 0. La skill `night-run` lo documenta.
 
 ### Changed
+- Sandbox de Claude Code configurable en sesiones interactivas (ADR 0015): `[claude] sandbox` en el host y en el perfil (perfil > host > activo). En `macbook` queda desactivado; `wt night` lo exige siempre. `forja doctor` avisa si `settings.json` no coincide.
 - `editor`: la plantilla de Zed fija el tema Tokyo Night Storm, los iconos Catppuccin Macchiato y el panel de proyecto a la izquierda, para que `forja apply editor` no pise las preferencias personales.
 - `editor`: TypeScript y TSX usan tsgo (extensión `tsgo`, servidor `typescript-ls`) en lugar de vtsls, que sigue para JavaScript. La plantilla deja de excluir `typescript-ls` en esos lenguajes y declara `auto_install_extensions` (`html`, `tsgo` y los temas). Probado en un monorepo pnpm sin el bug de watchers.
 

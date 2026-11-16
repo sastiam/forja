@@ -137,7 +137,7 @@ async function nightSandboxSettings(
   profile: Profile | null,
   hosts: string[],
 ): Promise<Record<string, unknown>> {
-  const empty = { allowed_domains: [], allow_read: [], allow_write: [] };
+  const empty = { enabled: true, allowed_domains: [], allow_read: [], allow_write: [] };
   if (!profile) return nightSettings({ base: empty, hosts, docker: false });
   const host = await loadHost(repoRoot(), profile.host);
   const enabled = enabledModuleNames(host, profile);

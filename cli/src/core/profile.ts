@@ -40,6 +40,8 @@ export interface Profile {
   claude: {
     allowed_domains: string[];
     allow_read: string[];
+    /** Sandbox de las sesiones interactivas; manda sobre el del host. `wt night` lo ignora (ADR 0015). */
+    sandbox?: boolean;
     model?: string;
     theme?: string;
     /** Plugins de Claude Code que forja no activa (`token-saver`, `aws-core`…; ver cli/src/core/claude-plugins.ts). */
@@ -169,6 +171,11 @@ export function validateProfile(raw: TomlTable): Profile {
       throw new ProfileError("containers.idle_minutes debe ser un entero >= 0");
     profile.containers.idle_minutes = n;
   }
+  if (claude.sandbox !== undefined) {
+    if (typeof claude.sandbox !== "boolean")
+      throw new ProfileError("claude.sandbox debe ser boolean");
+    profile.claude.sandbox = claude.sandbox;
+  }
   const model = str(claude.model, "claude.model");
   if (model) profile.claude.model = model;
   const theme = str(claude.theme, "claude.theme");
@@ -231,6 +238,7 @@ export function profileToToml(p: Profile): TomlTable {
   const claude: TomlTable = {};
   if (p.claude.allowed_domains.length) claude.allowed_domains = p.claude.allowed_domains;
   if (p.claude.allow_read.length) claude.allow_read = p.claude.allow_read;
+  if (p.claude.sandbox !== undefined) claude.sandbox = p.claude.sandbox;
   if (p.claude.model) claude.model = p.claude.model;
   if (p.claude.theme) claude.theme = p.claude.theme;
   if (p.claude.plugins_skip?.length) claude.plugins_skip = p.claude.plugins_skip;

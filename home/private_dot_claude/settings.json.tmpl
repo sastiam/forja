@@ -11,8 +11,8 @@
 {{- /* Dominios y lecturas: hosts/<host>.toml [claude] + perfil [claude] + módulos activos (forja apply → chezmoi.toml). */}}
 {{- $sb := get . "claude_sandbox" | default dict }}
   "sandbox": {
-    "enabled": true,
-    "failIfUnavailable": true,
+    "enabled": {{ if hasKey $sb "enabled" }}{{ get $sb "enabled" }}{{ else }}true{{ end }},
+    "failIfUnavailable": {{ if hasKey $sb "enabled" }}{{ get $sb "enabled" }}{{ else }}true{{ end }},
     "allowUnsandboxedCommands": false,
     "network": { "allowedDomains": {{ get $sb "allowed_domains" | default list | toJson }}{{ if has "containers" .modules }},
       {{- /* Docker para agentes: la VM de Colima solo monta ~/code (ADR 0012). */}}

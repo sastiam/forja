@@ -26,6 +26,7 @@ test("el perfil suma dominios y lecturas sin duplicar, en orden estable", () => 
     claude: { allowed_domains: ["github.com", "npm.example.invalid"], allow_read: ["~/.npmrc"] },
   };
   assert.deepEqual(claudeSandbox(host, profile, ["git"]), {
+    enabled: true,
     allowed_domains: ["github.com", "api.github.com", "npm.example.invalid"],
     allow_read: [GIT_LOCAL_CONFIG, "~/.npmrc"],
     allow_write: [],
@@ -66,4 +67,28 @@ test("memoria de tsserver en Zed: un octavo de la RAM entre 3 y 8 GB", async () 
   assert.equal(zedTsMemoryMb(128 * gb), 8192);
   const tmpl = readFileSync(join(root, "home/private_dot_config/zed/settings.json.tmpl"), "utf8");
   assert.match(tmpl, /"maxTsServerMemory": \{\{ get \. "zed_ts_memory_mb" \| default 4096 \}\}/);
+});
+
+test("sandbox interactivo: perfil > host > activo por defecto", () => {
+  const noRead = { claude: { allowed_domains: [], allow_read: [] } };
+  const host = (sandbox?: boolean) => ({ claude: { allowed_domains: [], sandbox } });
+  assert.equal(claudeSandbox(host(), noRead, []).enabled, true);
+  assert.equal(claudeSandbox(host(false), noRead, []).enabled, false);
+  assert.equal(
+    claudeSandbox(host(false), { claude: { ...noRead.claude, sandbox: true } }, []).enabled,
+    true,
+  );
+});
+
+test("claude.sandbox del perfil debe ser boolean", () => {
+  const base = { schema: 1, host: "x", identity: { name: "n", email: "e" } };
+  assert.throws(() => validateProfile({ ...base, claude: { sandbox: "no" } }), /claude.sandbox/);
+  assert.equal(validateProfile({ ...base, claude: { sandbox: false } }).claude.sandbox, false);
+});
+
+test("la plantilla de settings.json respeta claude_sandbox.enabled y wt night lo fuerza", () => {
+  const tmpl = readFileSync(join(root, "home/private_dot_claude/settings.json.tmpl"), "utf8");
+  assert.match(tmpl, /"enabled": \{\{ if hasKey \$sb "enabled" \}\}/);
+  const night = readFileSync(join(root, "cli/src/wt/night-sandbox.ts"), "utf8");
+  assert.match(night, /enabled: true/);
 });
