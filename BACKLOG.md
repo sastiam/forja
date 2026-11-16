@@ -19,3 +19,6 @@
 ## Ideas
 - [x] `forja report`: exportar el estado de la máquina a Markdown para el vault de Obsidian (hecho en Unreleased).
 - [ ] Rust: módulo opcional con sccache (CARGO_INCREMENTAL=0) si el uso deja de ser ocasional.
+
+## Inbox
+- [ ] 2026-11-16 editor: tras instalar la Nerd Font (cask font-jetbrains-mono-nerd-font), macOS no la registra y Zed no la lista (Font Book tampoco la ve). Reiniciar la base de datos y la caché de fuentes de macOS (evaluar atsutil databases -remove, reinicio de fontd y cierre de sesión) y automatizarlo en apply del módulo editor, o avisarlo en doctor. Quitar la cuarentena de los .ttf no bastó.

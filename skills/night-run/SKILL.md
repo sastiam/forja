@@ -12,6 +12,7 @@ Esta skill **no contiene lógica**: explica y lanza `forja wt night`, que envuel
 1. **Comprobaciones:**
    - `openspec-cascade` instalado (`forja apply looper`).
    - Cada change existe en `openspec/changes/<nombre>/tasks.md`.
+   - **Spec-gate:** `openspec-cascade spec-gate check --stage review --changes <lista>` (en el repo principal). Si no sale 0, aborta antes de crear nada y muestra su salida.
    - Corriente conectada (o `--allow-battery`).
 2. **Worktree de agente:** rama `agent/night-…`, con la firma ssh de agentes. Si ya existe, lo reutiliza.
 3. **Sandbox del agente** (ADR 0013): escribe `~/.local/state/forja/night/<rama>.settings.json` (sandbox obligatorio, dominios del host/perfil/`--host`, Docker) y comprueba:
@@ -37,6 +38,7 @@ Esta skill **no contiene lógica**: explica y lanza `forja wt night`, que envuel
 
 ## Reglas
 - No lances el loop si alguna comprobación falla: cada fallo trae su arreglo.
+- Si el spec-gate falla, corrige los specs del change y repite; no lo saltes ni lances `openspec-cascade` a mano para esquivarlo.
 - El sandbox solo cubre el motor `claude`. `--no-sandbox` (o los motores `opencode`/`antigravity`) deja al agente sin sandbox: úsalo solo a propósito y sin secretos al alcance.
 - Con la tapa cerrada, el Mac debe estar sobre una superficie ventilada, nunca en una mochila.
 - Si el loop murió y `forja awake status` sale «huérfano», ejecuta `forja awake off`.

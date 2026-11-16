@@ -13,6 +13,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 - `wt night` corre el agente **dentro del sandbox de Claude Code** (ADR 0013). Escribe un settings por noche (`~/.local/state/forja/night/`), se lo pasa a openspec-cascade con `--settings` y comprueba el entorno real del agente con una sesión corta de `claude -p` que ejecuta `forja sandbox-check --inside-loop`. `--no-sandbox` lo desactiva de forma explícita.
 
+- `wt night` ejecuta `openspec-cascade spec-gate check --stage review --changes <lista>` en las comprobaciones previas y aborta, sin crear el worktree, si no sale 0. La skill `night-run` lo documenta.
+
 ### Changed
 - `editor`: la plantilla de Zed fija el tema Tokyo Night Storm, los iconos Catppuccin Macchiato y el panel de proyecto a la izquierda, para que `forja apply editor` no pise las preferencias personales.
 
@@ -20,6 +22,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - `wt night`: el agente corría sin sandbox (openspec-cascade solo carga los ajustes del proyecto) y `sandbox-check` se ejecutaba fuera del sandbox, así que salía en verde aunque dentro fuera a fallar.
 - `~/.claude/CLAUDE.md` solo pide usar `op://` y `op run` si el perfil tiene `[secrets] provider = "1password"`; con `"none"` la regla se queda en no leer ni escribir secretos.
 - `settings.json` ya no pierde el tema que guarda `/config`: el perfil admite `[claude] theme` y la plantilla lo escribe solo si está definido.
+- `editor`: el terminal de Zed mostraba `?` en los iconos de starship (p. ej. Node) por no haber Nerd Font. El Brewfile instala `font-jetbrains-mono-nerd-font` y la plantilla fija `terminal.font_family`.
 
 ## [0.2.0] - 2026-11-14
 

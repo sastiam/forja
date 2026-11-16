@@ -12,6 +12,7 @@ import {
   missingChanges,
   type NightOpts,
   preflight,
+  specGateArgs,
 } from "../src/wt/night.ts";
 import { tmp } from "./helpers.ts";
 
@@ -75,6 +76,7 @@ test("preflight: exige looper, changes existentes y corriente", async () => {
     [
       ["openspec-cascade instalado", true],
       ["changes de OpenSpec", true],
+      ["spec-gate (review)", true],
       ["corriente conectada", false],
     ],
   );
@@ -82,6 +84,27 @@ test("preflight: exige looper, changes existentes y corriente", async () => {
   assert.ok(ok.every((x) => x.ok));
   const none = await preflight(onBattery, repo, opts({ changes: [] }), "linux");
   assert.equal(none.find((x) => x.name === "changes de OpenSpec")?.ok, false);
+});
+
+test("preflight: spec-gate distinto de 0 aborta; se ejecuta con los changes en orden", async () => {
+  const repo = repoWith("a", "b");
+  const calls: string[][] = [];
+  const failing = createFakeRunner((cmd, args) => {
+    if (cmd === "openspec-cascade" && args[0] === "spec-gate") {
+      calls.push(args);
+      return { code: 2, stderr: "spec incompleta" };
+    }
+    return { code: 0 };
+  });
+  const p = await preflight(failing, repo, opts(), "linux");
+  assert.equal(p.find((x) => x.name === "spec-gate (review)")?.ok, false);
+  assert.deepEqual(calls[0], specGateArgs(["a", "b"]));
+  assert.deepEqual(specGateArgs(["a", "b"]), [
+    "spec-gate", "check", "--stage", "review", "--changes", "a,b",
+  ]);
+  // Sin changes válidos no se ejecuta el gate.
+  const none = await preflight(failing, repo, opts({ changes: ["x"] }), "linux");
+  assert.ok(!none.some((x) => x.name === "spec-gate (review)"));
 });
 
 test("looper: plan pendiente si no está clonado en el ref fijado", async () => {
