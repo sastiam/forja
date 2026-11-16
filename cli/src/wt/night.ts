@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { runChecks, type SandboxFinding } from "../commands/sandbox-check.ts";
 import { claudeSandbox } from "../core/claude-sandbox.ts";
+import { ensureWorktreeIdentity } from "../core/git-identity.ts";
 import { enabledModuleNames, loadHost } from "../core/hosts.ts";
 import { log, out } from "../core/log.ts";
 import { LOOPER_BIN, LOOPER_ENGINES, type LooperEngine } from "../core/looper.ts";
@@ -214,9 +215,14 @@ export async function wtNight(argv: string[]): Promise<number> {
         await createWorktree(runner, repo, {
           branch: o.branch,
           agent: "night",
-          signingKey: profile?.signing.agent_key,
+          profile,
         })
       ).path;
+  // Idempotente: un worktree reutilizado también recupera identidad y firma.
+  if (existing) {
+    const ensured = await ensureWorktreeIdentity(runner, repo, path, "night", profile);
+    for (const w of ensured.warnings) log.warn(w);
+  }
   log.info(`worktree: ${path}`);
 
   // 3. Comprobaciones: el arnés (fuera del sandbox: commits y firma) y, con

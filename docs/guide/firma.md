@@ -44,3 +44,34 @@ En el repo: Settings → Branches → regla para `main` con *Require signed comm
 ## 5. Publicar paquetes con procedencia
 
 Solo desde CI, al empujar una etiqueta `v*.*.*`: permisos `id-token: write` y `attestations: write`, `npm publish --provenance` para paquetes y `actions/attest-build-provenance` para los artefactos de una release. Forja es `private`, así que esto aplica a los repos que sí publican.
+
+## 6. Identidad y firma por repo (ADR 0014)
+
+Tu config global de git es la laboral y manda por defecto. Los repos personales son excepciones que se declaran en `~/.config/forja/local/profile.toml`:
+
+```toml
+[git.identities.personal]
+name = "Tu Nombre"
+email = "ID+usuario@users.noreply.github.com"
+signing_key = "~/.ssh/id_ed25519_personal.pub"   # commits humanos
+# agent_key = "~/.config/forja/agent-signing"    # opcional; por defecto [signing] agent_key
+
+[git.repos]            # por nombre de carpeta (o ruta con "/")
+forja = "personal"
+openspec-cascade = "personal"
+```
+
+Un repo que no aparece en `[git.repos]` conserva la identidad global. Para añadir otro repo, una línea.
+
+Qué hace forja, sin intervención:
+
+- `forja wt new` y `forja wt night` escriben la identidad del repo en su `.git/config` (`git config --local`). Los worktrees la heredan, los cree forja, Claude Code, openspec-cascade o `git worktree add`.
+- Los worktrees de agentes añaden, solo en su `config.worktree`, la clave de agente **y el nombre y email de la identidad**, para que GitHub verifique el commit con la cuenta correcta.
+- `wt night` reaplica todo al reutilizar un worktree existente.
+
+Para repos y worktrees que ya existían:
+
+```sh
+forja git identity apply     # repo actual y todos sus worktrees
+forja git identity check     # email y clave efectivos de cada worktree; sale con 2 si no cuadran
+```

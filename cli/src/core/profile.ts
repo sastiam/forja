@@ -8,6 +8,17 @@ export interface WorkProfile {
   aws_config?: string;
 }
 
+/**
+ * Identidad de git alternativa a la global (que es la laboral por defecto).
+ * `signing_key` firma los commits humanos; `agent_key` (o `[signing] agent_key`) los de agentes.
+ */
+export interface GitIdentity {
+  name: string;
+  email: string;
+  signing_key: string;
+  agent_key?: string;
+}
+
 export interface Profile {
   schema: 1;
   host: string;
@@ -17,6 +28,11 @@ export interface Profile {
   profiles: { work?: WorkProfile; personal?: { code_dir?: string } };
   notify: { ntfy_topic_file?: string };
   signing: { agent_key?: string };
+  /**
+   * Excepciones a la identidad global: `identities` nombra identidades y `repos` asigna
+   * cada repo (por nombre de carpeta o ruta) a una. Sin entrada, manda la config global.
+   */
+  git: { identities: Record<string, GitIdentity>; repos: Record<string, string> };
   /**
    * Claude Code: extras personales del sandbox (se suman a los del host) y el
    * modelo por defecto que `/model` guarda en settings.json, y el tema que guarda `/config`.
@@ -76,6 +92,32 @@ function strList(v: unknown, path: string): string[] {
   return v as string[];
 }
 
+function parseGit(git: TomlTable): Profile["git"] {
+  const identities: Record<string, GitIdentity> = {};
+  const ids = table(git.identities, "git.identities");
+  for (const [name, v] of Object.entries(ids)) {
+    const t = table(v, `git.identities.${name}`);
+    const id: GitIdentity = {
+      name: str(t.name, `git.identities.${name}.name`, true) as string,
+      email: str(t.email, `git.identities.${name}.email`, true) as string,
+      signing_key: str(t.signing_key, `git.identities.${name}.signing_key`, true) as string,
+    };
+    const agentKey = str(t.agent_key, `git.identities.${name}.agent_key`);
+    if (agentKey) id.agent_key = agentKey;
+    identities[name] = id;
+  }
+  const repos: Record<string, string> = {};
+  for (const [repo, v] of Object.entries(table(git.repos, "git.repos"))) {
+    const name = str(v, `git.repos.${repo}`) as string;
+    if (!identities[name])
+      throw new ProfileError(
+        `git.repos.${repo}: la identidad "${name}" no existe en git.identities`,
+      );
+    repos[repo] = name;
+  }
+  return { identities, repos };
+}
+
 /** Valida un objeto TOML ya parseado y devuelve un Profile tipado. */
 export function validateProfile(raw: TomlTable): Profile {
   if (raw.schema !== 1) throw new ProfileError("schema debe ser 1");
@@ -104,6 +146,7 @@ export function validateProfile(raw: TomlTable): Profile {
       ntfy_topic_file: str(table(raw.notify, "notify").ntfy_topic_file, "notify.ntfy_topic_file"),
     },
     signing: { agent_key: str(signing.agent_key, "signing.agent_key") },
+    git: parseGit(table(raw.git, "git")),
     claude: {
       allowed_domains: strList(claude.allowed_domains, "claude.allowed_domains"),
       allow_read: strList(claude.allow_read, "claude.allow_read"),
@@ -178,6 +221,13 @@ export function profileToToml(p: Profile): TomlTable {
   if (Object.keys(profiles).length) out.profiles = profiles;
   if (p.notify.ntfy_topic_file) out.notify = { ntfy_topic_file: p.notify.ntfy_topic_file };
   if (p.signing.agent_key) out.signing = { agent_key: p.signing.agent_key };
+  if (Object.keys(p.git.identities).length) {
+    const identities: TomlTable = {};
+    for (const [k, id] of Object.entries(p.git.identities)) identities[k] = { ...id };
+    const git: TomlTable = { identities };
+    if (Object.keys(p.git.repos).length) git.repos = { ...p.git.repos };
+    out.git = git;
+  }
   const claude: TomlTable = {};
   if (p.claude.allowed_domains.length) claude.allowed_domains = p.claude.allowed_domains;
   if (p.claude.allow_read.length) claude.allow_read = p.claude.allow_read;

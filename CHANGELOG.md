@@ -5,6 +5,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 ## [Unreleased]
 
 ### Added
+- Identidad y firma de git por repo (ADR 0014): `[git.identities]` y `[git.repos]` en el perfil; `wt new` y `wt night` la aplican a cualquier worktree sin intervención, y `forja git identity apply|check` cubre los existentes. Los worktrees de agente llevan también el email de la identidad.
 - Mods de Claude Code en `plugins/` (marketplace local `forja`, ADR 0012): `token-saver` (Bash por `rtk rewrite`, búsqueda con codebase-memory, banda de contexto y ahorro), `forja-status` (banda de estado y `/forja` con `forja doctor` en un panel), `tdd-guard` (`/tdd`, primero un test) y `quality-guard` (números mágicos tras cada edición y confirmación antes de tocar AWS fuera de Floci). `npm run plugins:check` los valida y prueba con Claude Code.
 - `agents`: `settings.json` declara los marketplaces y plugins (los mods, `aws-core` y `codebase-memory`), `apply` instala los que falten y `doctor` avisa de los que no están, de rtk y de uvx. Brewfile con `rtk` y `uv`. Perfil: `[claude] plugins_skip`.
 - Skills `tdd`, `no-magic-numbers` y `well-architected`.

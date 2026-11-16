@@ -1,5 +1,6 @@
 import { existsSync, statSync } from "node:fs";
 import { expandHome } from "./paths.ts";
+import type { GitIdentity } from "./profile.ts";
 import type { Runner } from "./runners/shell.ts";
 
 export interface SigningFinding {
@@ -14,12 +15,15 @@ export const MAX_KEY_AGE_DAYS = 90;
 /**
  * Activa la firma ssh solo en un worktree de agente (`git config --worktree`).
  * La clave es la privada: sin agente ssh, git solo firma con la ruta privada.
+ * Con `identity`, el worktree lleva también su nombre y email: así el commit lo
+ * firma el agente pero lo autoriza la cuenta correcta, no la identidad global.
  */
 export async function enableAgentSigning(
   runner: Runner,
   repo: string,
   worktree: string,
   keyPath: string,
+  identity?: Pick<GitIdentity, "name" | "email">,
 ): Promise<void> {
   const key = expandHome(keyPath);
   if (!existsSync(key))
@@ -29,6 +33,12 @@ export async function enableAgentSigning(
     [["config", "--worktree", "gpg.format", "ssh"], worktree],
     [["config", "--worktree", "user.signingkey", key], worktree],
     [["config", "--worktree", "commit.gpgsign", "true"], worktree],
+    ...(identity
+      ? ([
+          [["config", "--worktree", "user.name", identity.name], worktree],
+          [["config", "--worktree", "user.email", identity.email], worktree],
+        ] as [string[], string][])
+      : []),
   ];
   for (const [args, cwd] of steps) {
     const r = await runner.exec("git", args, { cwd });
