@@ -21,7 +21,7 @@ colima start --vm-type vz --mount-type virtiofs --vz-rosetta --cpu 4 --memory 6 
 docker context use colima
 ```
 
-Para fijar otro tamaño, en `~/.config/forja/local/profile.toml` (cualquiera de los tres):
+Para fijar otro tamaño, en `~/.config/forja/profile.toml` (cualquiera de los tres):
 
 ```toml
 [containers]
