@@ -20,6 +20,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - `wt night`: el agente corría sin sandbox (openspec-cascade solo carga los ajustes del proyecto) y `sandbox-check` se ejecutaba fuera del sandbox, así que salía en verde aunque dentro fuera a fallar.
 - `~/.claude/CLAUDE.md` solo pide usar `op://` y `op run` si el perfil tiene `[secrets] provider = "1password"`; con `"none"` la regla se queda en no leer ni escribir secretos.
 - `settings.json` ya no pierde el tema que guarda `/config`: el perfil admite `[claude] theme` y la plantilla lo escribe solo si está definido.
+- `editor`: el terminal de Zed mostraba `?` en los iconos de starship (p. ej. Node) por no haber Nerd Font. El Brewfile instala `font-jetbrains-mono-nerd-font` y la plantilla fija `terminal.font_family`.
 
 ## [0.2.0] - 2026-11-14
 
