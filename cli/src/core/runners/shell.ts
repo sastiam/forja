@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { copyFile, lstat, mkdir, readlink, rm, symlink, writeFile } from "node:fs/promises";
+import { cp, lstat, mkdir, readlink, rm, symlink, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
 export interface ExecResult {
@@ -30,7 +30,8 @@ export interface Runner {
   writeFile(path: string, content: string, mode?: number): Promise<void>;
   mkdirp(path: string): Promise<void>;
   link(target: string, path: string): Promise<void>;
-  copy(from: string, to: string): Promise<void>;
+  /** Copia un archivo o un directorio entero; `keep` decide qué rutas de origen entran. */
+  copy(from: string, to: string, keep?: (src: string) => boolean): Promise<void>;
   remove(path: string): Promise<void>;
   /** Acciones que se habrían ejecutado en dryRun. */
   readonly skipped: string[];
@@ -121,13 +122,13 @@ export function createRunner(dryRun: boolean): Runner {
       }
       await symlink(target, path);
     },
-    async copy(from, to) {
+    async copy(from, to, keep) {
       if (dryRun) {
         skipped.push(`cp ${from} ${to}`);
         return;
       }
       await mkdir(dirname(to), { recursive: true });
-      await copyFile(from, to);
+      await cp(from, to, { recursive: true, filter: keep });
     },
     async remove(path) {
       if (dryRun) {
@@ -163,7 +164,7 @@ export function createFakeRunner(
     writeFile: async (p) => void calls.push(`write ${p}`),
     mkdirp: async (p) => void calls.push(`mkdir ${p}`),
     link: async (t, p) => void calls.push(`link ${t} ${p}`),
-    copy: async (f, t) => void calls.push(`cp ${f} ${t}`),
+    copy: async (f, t) => void calls.push(`cp -R ${f} ${t}`),
     remove: async (p) => void calls.push(`rm ${p}`),
   };
 }

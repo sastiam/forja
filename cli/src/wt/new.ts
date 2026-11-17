@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { join, normalize } from "node:path";
+import { join, normalize, relative } from "node:path";
 import { parseArgs } from "node:util";
 import { ensureWorktreeIdentity } from "../core/git-identity.ts";
 import { log, out } from "../core/log.ts";
@@ -75,7 +75,12 @@ export async function createWorktree(
       log.warn(`no se copia ${clean} (secreto): usa .env.tpl con op:// y 'op run'`);
       continue;
     }
-    if (existsSync(join(repo, clean))) await runner.copy(join(repo, clean), join(path, clean));
+    if (!existsSync(join(repo, clean))) continue;
+    await runner.copy(join(repo, clean), join(path, clean), (src) => {
+      const secret = isSecretPath(relative(repo, src));
+      if (secret) log.warn(`no se copia ${relative(repo, src)} (secreto)`);
+      return !secret;
+    });
   }
 
   const port = portFor(slugify(branch), project.portBase);

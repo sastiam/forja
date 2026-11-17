@@ -36,6 +36,10 @@ export interface NightOpts {
    * sin ella (worktree reutilizado), en el directorio que recibe `preflight`.
    */
   base?: string;
+  /** Modelo del motor; sin él, openspec-cascade usa el suyo por defecto. */
+  model?: string;
+  /** Esfuerzo de razonamiento; sin él, openspec-cascade usa el suyo por defecto. */
+  effort?: string;
 }
 
 export interface Preflight {
@@ -84,6 +88,8 @@ export function cascadeArgs(
     o.engine,
     "--log-dir",
     logDir,
+    ...(o.model ? ["--model", o.model] : []),
+    ...(o.effort ? ["--effort", o.effort] : []),
     ...(o.fullGate ? ["--full-gate"] : []),
     ...(settingsPath ? ["--settings", settingsPath] : []),
   ];
@@ -192,7 +198,7 @@ async function notify(profile: Profile | null, message: string): Promise<void> {
 }
 
 const HELP =
-  "uso: forja wt night --changes a,b [--engine claude|opencode|antigravity] [--branch nombre] [--base rama] [--full-gate] [--allow-battery] [--host h]… [--no-sandbox] [--dry-run]";
+  "uso: forja wt night --changes a,b [--engine claude|opencode|antigravity] [--branch nombre] [--base rama] [--model m] [--effort nivel] [--full-gate] [--allow-battery] [--host h]… [--no-sandbox] [--dry-run]";
 
 export async function wtNight(argv: string[]): Promise<number> {
   const { values } = parseArgs({
@@ -204,6 +210,8 @@ export async function wtNight(argv: string[]): Promise<number> {
       engine: { type: "string" },
       branch: { type: "string" },
       base: { type: "string" },
+      model: { type: "string" },
+      effort: { type: "string" },
       "full-gate": { type: "boolean" },
       "allow-battery": { type: "boolean" },
       host: { type: "string", multiple: true },
@@ -228,6 +236,8 @@ export async function wtNight(argv: string[]): Promise<number> {
     allowBattery: values["allow-battery"] === true,
     hosts: values.host ?? ["github.com"],
     sandbox: values["no-sandbox"] !== true,
+    model: values.model,
+    effort: values.effort,
   };
   const runner = createRunner(false);
   const repo = await mainRepoRoot(runner, process.cwd());
