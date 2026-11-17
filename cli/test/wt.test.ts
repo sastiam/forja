@@ -138,6 +138,22 @@ test("wt new excluye .env.worktree en el repo (una vez) para que no ensucie el w
   assert.equal(exclude.split("\n").filter((l) => l === ".env.worktree").length, 1);
 });
 
+test("wt new copia directorios de .worktreeinclude sin los secretos de dentro", async () => {
+  isolateState();
+  const repo = makeRepo();
+  mkdirSync(join(repo, "graphify-out", "cache", "sub"), { recursive: true });
+  writeFileSync(join(repo, "graphify-out", "cache", "a.json"), "{}\n");
+  writeFileSync(join(repo, "graphify-out", "cache", "sub", "b.json"), "[]\n");
+  writeFileSync(join(repo, "graphify-out", "cache", "sub", ".env"), "SECRETO=1\n");
+  writeFileSync(join(repo, ".worktreeinclude"), "graphify-out/cache/\n");
+
+  const rec = await createWorktree(runner, repo, { branch: "dirs", fetch: false });
+  const cache = join(rec.path, "graphify-out", "cache");
+  assert.equal(readFileSync(join(cache, "a.json"), "utf8"), "{}\n");
+  assert.equal(readFileSync(join(cache, "sub", "b.json"), "utf8"), "[]\n");
+  assert.ok(!existsSync(join(cache, "sub", ".env")), "nunca copia secretos anidados");
+});
+
 test("wt init-project no sobrescribe archivos existentes", async () => {
   const dest = tmp();
   writeFileSync(join(dest, ".worktreeinclude"), "propio\n");
