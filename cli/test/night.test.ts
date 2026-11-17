@@ -167,6 +167,14 @@ test("cascadeArgs pasa --settings solo con sandbox", () => {
   assert.ok(!cascadeArgs("/wt", opts(), "/logs").includes("--settings"));
 });
 
+test("cascadeArgs pasa --model y --effort solo si se indican", () => {
+  const args = cascadeArgs("/wt", opts({ model: "opus", effort: "xhigh" }), "/logs");
+  assert.equal(args[args.indexOf("--model") + 1], "opus");
+  assert.equal(args[args.indexOf("--effort") + 1], "xhigh");
+  const plain = cascadeArgs("/wt", opts(), "/logs");
+  assert.ok(!plain.includes("--model") && !plain.includes("--effort"));
+});
+
 test("preflight con sandbox: exige motor claude y openspec-cascade con --settings", async () => {
   const repo = repoWith("a", "b");
   const runner = (help: string) =>
