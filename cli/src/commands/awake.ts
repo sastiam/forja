@@ -5,11 +5,13 @@ import { createRunner } from "../core/runners/shell.ts";
 
 const HELP = `forja awake — no dormir al cerrar la tapa (solo mientras haga falta)
 
-  on [--reason texto]   pmset -a disablesleep 1 (lo usa wt night; a mano, recuerda apagarlo)
-  off                   pmset -a disablesleep 0: vuelve el comportamiento normal
+  on [--reason texto]   macOS: pmset -a disablesleep 1 · Linux: inhibidor de systemd (lo usa wt night; a mano, recuerda apagarlo)
+  off                   vuelve el comportamiento normal
   status [--json]       estado, quién lo activó y batería
 
-Requiere la regla sudo de macos-base (/etc/sudoers.d/forja-awake).`;
+macOS requiere la regla sudo de macos-base (/etc/sudoers.d/forja-awake). Linux no necesita sudo.`;
+
+const SUPPORTED = ["darwin", "linux"];
 
 export async function awakeCommand(argv: string[]): Promise<number> {
   const [sub, ...rest] = argv;
@@ -18,19 +20,21 @@ export async function awakeCommand(argv: string[]): Promise<number> {
     allowPositionals: true,
     options: { reason: { type: "string" }, json: { type: "boolean" } },
   });
-  if (process.platform !== "darwin" && sub !== undefined && sub !== "--help") {
-    log.error("forja awake solo aplica a macOS");
+  if (!SUPPORTED.includes(process.platform) && sub !== undefined && sub !== "--help") {
+    log.error("forja awake solo aplica a macOS y Linux");
     return 1;
   }
   const runner = createRunner(false);
   switch (sub) {
     case "on":
       await awakeOn(runner, values.reason ?? "manual");
-      log.ok("Modo tapa activo: el Mac no dormirá al cerrar la tapa. Apágalo con: forja awake off");
+      log.ok(
+        "Modo tapa activo: el equipo no dormirá al cerrar la tapa. Apágalo con: forja awake off",
+      );
       return 0;
     case "off":
       await awakeOff(runner);
-      log.ok("Modo tapa desactivado: cerrar la tapa vuelve a dormir el Mac.");
+      log.ok("Modo tapa desactivado: cerrar la tapa vuelve a dormir el equipo.");
       return 0;
     case "status": {
       const s = await awakeStatus(runner);
@@ -39,7 +43,7 @@ export async function awakeCommand(argv: string[]): Promise<number> {
         out(
           s.sleepDisabled
             ? `● activo${s.state ? ` desde ${s.state.since} (${s.state.reason})` : " sin registro de forja"}${s.orphan ? " — huérfano: forja awake off" : ""}`
-            : "○ inactivo: la tapa duerme el Mac",
+            : "○ inactivo: la tapa duerme el equipo",
         );
         out(
           `  batería: ${s.battery.percent ?? "?"} %${s.battery.ac ? " con cargador" : " sin cargador"}`,
