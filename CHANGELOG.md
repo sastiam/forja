@@ -5,6 +5,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 ## [Unreleased]
 
 ### Added
+- Host **Fedora** (hito v0.4.0, en curso): `hosts/fedora.toml` pasa a `supported` con `core`, `shell`, `git`, `runtimes` y `agents`. Cada módulo declara sus paquetes en `packages.fedora.txt` (el equivalente al Brewfile); `plan` muestra lo que falta y `apply` instala solo eso con `sudo dnf install -y`. `bootstrap.sh` ya no sale en Linux: instala git con dnf y mise con su instalador oficial en `~/.local/bin`. Los repos de terceros (COPR, docker-ce…) no se añaden solos.
+- `module.toml`: comprobaciones por SO (`[checks.darwin]`, `[checks.linux]`); `core` ya no exige `brew` en Linux.
+- `runtimes`: en Linux, mise instala `opencode`, `rtk` y `biome` (no están en dnf; en macOS los trae el Brewfile).
+- `core` (macOS): el Brewfile instala `chezmoi`, que ningún módulo instalaba y del que dependen `plan` y `apply`.
 - Identidad y firma de git por repo (ADR 0014): `[git.identities]` y `[git.repos]` en el perfil; `wt new` y `wt night` la aplican a cualquier worktree sin intervención, y `forja git identity apply|check` cubre los existentes. Los worktrees de agente llevan también el email de la identidad.
 - Mods de Claude Code en `plugins/` (marketplace local `forja`, ADR 0012): `token-saver` (Bash por `rtk rewrite`, búsqueda con codebase-memory, banda de contexto y ahorro), `forja-status` (banda de estado y `/forja` con `forja doctor` en un panel), `tdd-guard` (`/tdd`, primero un test) y `quality-guard` (números mágicos tras cada edición y confirmación antes de tocar AWS fuera de Floci). `npm run plugins:check` los valida y prueba con Claude Code.
 - `agents`: `settings.json` declara los marketplaces y plugins (los mods, `aws-core` y `codebase-memory`), `apply` instala los que falten y `doctor` avisa de los que no están, de rtk y de uvx. Brewfile con `rtk` y `uv`. Perfil: `[claude] plugins_skip`.
@@ -21,6 +25,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - `wt night` ejecuta `openspec-cascade spec-gate check --stage review --changes <lista>` en las comprobaciones previas y aborta, sin crear el worktree, si no sale 0. La skill `night-run` lo documenta.
 
 ### Changed
+- Lint arreglado: `biome.json` migrado al esquema de Biome 2.6.6 (CI fallaba en `main`).
 - Sandbox de Claude Code configurable en sesiones interactivas (ADR 0015): `[claude] sandbox` en el host y en el perfil (perfil > host > activo). En `macbook` queda desactivado; `wt night` lo exige siempre. `forja doctor` avisa si `settings.json` no coincide.
 - `editor`: la plantilla de Zed fija el tema Tokyo Night Storm, los iconos Catppuccin Macchiato y el panel de proyecto a la izquierda, para que `forja apply editor` no pise las preferencias personales.
 - `editor`: TypeScript y TSX usan tsgo (extensión `tsgo`, servidor `typescript-ls`) en lugar de vtsls, que sigue para JavaScript. La plantilla deja de excluir `typescript-ls` en esos lenguajes y declara `auto_install_extensions` (`html`, `tsgo` y los temas). Probado en un monorepo pnpm sin el bug de watchers.

@@ -12,6 +12,7 @@ import {
   type Ctx,
   chezmoiSource,
   computePlan,
+  dnfFile,
   loadHooks,
   type ModuleCtx,
   moduleTargets,
@@ -21,6 +22,7 @@ import {
 import { confirm, isInteractive } from "../core/prompt.ts";
 import * as brew from "../core/runners/brew.ts";
 import * as chezmoi from "../core/runners/chezmoi.ts";
+import * as dnf from "../core/runners/dnf.ts";
 import { saveLastApply } from "../core/state.ts";
 import { stringify, type TomlTable } from "../core/toml.ts";
 import { renderPlan } from "./plan.ts";
@@ -167,6 +169,15 @@ export async function applyCommand(argv: string[]): Promise<number> {
         }
         const r = await brew.bundleApply(ctx.runner, file);
         if (r.code !== 0) throw new Error(`brew bundle falló (${r.code})`);
+      }
+      const pkgFile = dnfFile(m, ctx.platform);
+      if (pkgFile) {
+        const missing = await dnf.missingPackages(ctx.runner, await dnf.readPackages(pkgFile));
+        if (missing === null) throw new Error("falta rpm: este host no parece Fedora");
+        if (missing.length) {
+          const r = await dnf.installMissing(ctx.runner, missing);
+          if (r.code !== 0) throw new Error(`dnf install falló (${r.code})`);
+        }
       }
       if (m.targets.length) {
         const r = await chezmoi.apply(ctx.runner, chezmoiSource(ctx.root), moduleTargets(m), {

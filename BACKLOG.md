@@ -13,7 +13,10 @@
 - [ ] agents: valorar `--config` en `claude plugin install` para fijar las opciones de los mods desde el perfil.
 
 ## Hosts
-- [ ] fedora: módulos core/shell/git/runtimes/agents con dnf.
+- [x] fedora: módulos core/shell/git/runtimes/agents con dnf (en la rama feat/linux-fedora-host).
+- [ ] fedora: `containers` con Docker nativo, `awake` con systemd-inhibit y sandbox de Claude con bubblewrap.
+- [ ] fedora: `terminal` (Ghostty vía COPR), `editor` (Zed, fuente), `browsers`; `mergiraf` y `1password-cli` no están en dnf ni en mise.
+- [ ] fedora: job de CI con contenedor `fedora` que ejecute `forja plan --json`.
 - [ ] raspi: perfil mínimo arm64.
 
 ## Ideas

@@ -1,0 +1,2 @@
+# uv lo usa el MCP de aws-core (uvx). opencode y rtk llegan por mise (home/private_dot_config/mise).
+uv

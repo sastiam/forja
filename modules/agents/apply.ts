@@ -170,14 +170,14 @@ async function versionCheck(runner: Runner, cmd: string): Promise<CheckResult> {
  * ~/.opencode/bin y lo antepone al PATH en ~/.zshrc, tapando el de brew y
  * quedando fuera de drift/report.
  */
-async function opencodeChecks(runner: Runner): Promise<CheckResult[]> {
+async function opencodeChecks(runner: Runner, platform: string): Promise<CheckResult[]> {
   if (!(await commandExists(runner, "opencode")))
     return [{ name: "opencode", ok: false, detail: "no instalado (forja apply agents)" }];
   const path = (await runner.query("sh", ["-c", "command -v opencode"])).stdout.trim();
   const unmanaged = path.startsWith(join(homedir(), ".opencode"));
   return [
     {
-      name: "opencode instalado con brew",
+      name: `opencode instalado con ${platform === "linux" ? "mise" : "brew"}`,
       ok: !unmanaged,
       warn: true,
       detail: unmanaged
@@ -255,7 +255,7 @@ export async function check(ctx: ModuleCtx): Promise<CheckResult[]> {
       detail: missing.length ? `faltan ${missing.join(", ")}` : undefined,
     },
     await skillsCheck(ctx.runner),
-    ...(await opencodeChecks(ctx.runner)),
+    ...(await opencodeChecks(ctx.runner, ctx.platform)),
     ...(await hermesChecks(ctx.runner)),
     ...(await pluginChecks(ctx)),
   ];

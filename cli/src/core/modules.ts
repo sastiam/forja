@@ -14,6 +14,8 @@ export interface Module {
   requiresSudo: boolean;
   optional: boolean;
   checks: string[];
+  /** Comprobaciones extra por SO (`[checks.darwin]` / `[checks.linux]`). */
+  checksByOs: Record<string, string[]>;
   hasBrewfile: boolean;
   hasApply: boolean;
 }
@@ -29,6 +31,13 @@ export function parseModule(name: string, dir: string, text: string): Module {
     t.checks && typeof t.checks === "object" && !Array.isArray(t.checks)
       ? list(t.checks.commands)
       : [];
+  const checksByOs: Record<string, string[]> = {};
+  if (t.checks && typeof t.checks === "object" && !Array.isArray(t.checks))
+    for (const os of ["darwin", "linux"]) {
+      const sub = t.checks[os];
+      if (sub && typeof sub === "object" && !Array.isArray(sub))
+        checksByOs[os] = list(sub.commands);
+    }
   return {
     name,
     dir,
@@ -40,6 +49,7 @@ export function parseModule(name: string, dir: string, text: string): Module {
     requiresSudo: t.requires_sudo === true,
     optional: t.optional === true,
     checks,
+    checksByOs,
     hasBrewfile: existsSync(join(dir, "Brewfile")),
     hasApply: existsSync(join(dir, "apply.ts")),
   };

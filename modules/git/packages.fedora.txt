@@ -1,0 +1,4 @@
+git
+git-delta
+lazygit
+# mergiraf (no está en Fedora) y sublime-merge (repo de terceros): pendientes (ver BACKLOG).
