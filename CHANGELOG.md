@@ -6,6 +6,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ### Added
 - Host **Fedora** (hito v0.4.0, en curso): `hosts/fedora.toml` pasa a `supported` con `core`, `shell`, `git`, `runtimes` y `agents`. Cada módulo declara sus paquetes en `packages.fedora.txt` (el equivalente al Brewfile); `plan` muestra lo que falta y `apply` instala solo eso con `sudo dnf install -y`. `bootstrap.sh` ya no sale en Linux: instala git con dnf y mise con su instalador oficial en `~/.local/bin`. Los repos de terceros (COPR, docker-ce…) no se añaden solos.
+- Fedora, fase 2 (ADR 0016): **`containers`** con Docker nativo (comprueba y habilita `docker.service`; no instala el motor ni toca el grupo `docker`; sin socket de Docker en el sandbox de Claude); **`forja awake`** y `wt night` con modo tapa vía `systemd-inhibit` (sin sudo) y guardián de batería con `/sys/class/power_supply`; **sandbox de Claude** con bubblewrap y socat (`agents` los instala, `doctor` comprueba que `bwrap` aísle de verdad). `worktrees` y `containers` entran en `hosts/fedora.toml`.
+- `module.toml`: `targets_darwin` para rutas solo de macOS (los scripts de Colima ya no se aplican en Linux).
 - `module.toml`: comprobaciones por SO (`[checks.darwin]`, `[checks.linux]`); `core` ya no exige `brew` en Linux.
 - `runtimes`: en Linux, mise instala `opencode`, `rtk` y `biome` (no están en dnf; en macOS los trae el Brewfile).
 - `core` (macOS): el Brewfile instala `chezmoi`, que ningún módulo instalaba y del que dependen `plan` y `apply`.

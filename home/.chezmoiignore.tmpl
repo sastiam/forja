@@ -25,3 +25,9 @@
 {{ if and (has "agents" .modules) (not (has "worktrees" .modules)) }}
 .claude/hooks/worktree-*.sh
 {{ end }}
+{{ if ne .chezmoi.os "darwin" }}
+{{- /* Colima y el hook que la arranca solo existen en macOS. */}}
+.config/forja/bin/colima-ensure
+.config/forja/bin/colima-idle
+.claude/hooks/colima-up.sh
+{{ end }}

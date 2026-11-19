@@ -88,14 +88,14 @@ test("guardTick corta el modo tapa con batería baja y duerme si la tapa está c
     if (cmd === "ioreg") return { stdout: '"AppleClamshellState" = Yes' };
     return undefined;
   }, false);
-  assert.equal(await guardTick(r), true);
+  assert.equal(await guardTick(r, undefined, "darwin"), true);
   assert.ok(r.calls.includes("sudo -n /usr/bin/pmset -a disablesleep 0"));
   assert.ok(r.calls.includes("sudo -n /usr/bin/pmset sleepnow"));
 });
 
 test("guardTick no hace nada con cargador", async () => {
   const r = createFakeRunner(() => ({ stdout: "Now drawing from 'AC Power'\n\t10%;" }));
-  assert.equal(await guardTick(r), false);
+  assert.equal(await guardTick(r, undefined, "darwin"), false);
   assert.ok(!r.calls.some((c) => c.startsWith("sudo")));
 });
 
@@ -104,13 +104,13 @@ test("awakeStatus: huérfano si el proceso que lo activó ya no existe", async (
   const r = createFakeRunner((cmd, args) =>
     cmd === "pmset" && args.length === 1 ? { stdout: " SleepDisabled\t\t1\n" } : undefined,
   );
-  assert.equal((await awakeStatus(r)).orphan, true, "activo sin registro");
+  assert.equal((await awakeStatus(r, "darwin")).orphan, true, "activo sin registro");
   await saveAwake({ since: "x", reason: "wt night", pid: 2 ** 22 + 12345 });
-  assert.equal((await awakeStatus(r)).orphan, true, "pid muerto");
+  assert.equal((await awakeStatus(r, "darwin")).orphan, true, "pid muerto");
   await saveAwake({ since: "x", reason: "wt night", pid: process.pid });
-  assert.equal((await awakeStatus(r)).orphan, false);
+  assert.equal((await awakeStatus(r, "darwin")).orphan, false);
   await saveAwake({ since: "x", reason: "manual" });
-  assert.equal((await awakeStatus(r)).orphan, false, "manual sin pid no es huérfano");
+  assert.equal((await awakeStatus(r, "darwin")).orphan, false, "manual sin pid no es huérfano");
 });
 
 test("plist de maxfiles", () => {

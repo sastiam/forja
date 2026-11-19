@@ -1,5 +1,13 @@
 import { userInfo } from "node:os";
 import { log } from "./log.ts";
+import {
+  batteryLinux,
+  inhibitStart,
+  inhibitStop,
+  lidClosedLinux,
+  sleepDisabledLinux,
+  suspendLinux,
+} from "./power-linux.ts";
 import type { Runner } from "./runners/shell.ts";
 import { type AwakeState, loadAwake, saveAwake } from "./state.ts";
 
@@ -42,11 +50,25 @@ export function parseClamshellClosed(text: string): boolean {
   return /"AppleClamshellState"\s*=\s*Yes/.test(text);
 }
 
-export async function sleepDisabled(runner: Runner): Promise<boolean> {
+/**
+ * `platform` elige el mecanismo: pmset en macOS, un inhibidor de systemd en Linux
+ * (power-linux.ts). Por defecto, el SO donde corre forja.
+ */
+const isLinux = (platform: string): boolean => platform === "linux";
+
+export async function sleepDisabled(
+  runner: Runner,
+  platform: string = process.platform,
+): Promise<boolean> {
+  if (isLinux(platform)) return sleepDisabledLinux(runner);
   return parseSleepDisabled((await runner.query("pmset", ["-g"])).stdout);
 }
 
-export async function battery(runner: Runner): Promise<Battery> {
+export async function battery(
+  runner: Runner,
+  platform: string = process.platform,
+): Promise<Battery> {
+  if (isLinux(platform)) return batteryLinux(runner);
   return parseBatt((await runner.query("pmset", ["-g", "batt"])).stdout);
 }
 
@@ -59,13 +81,20 @@ async function sudoPmset(runner: Runner, args: string[]): Promise<void> {
     );
 }
 
-export async function awakeOn(runner: Runner, reason: string, pid?: number): Promise<void> {
-  await sudoPmset(runner, ["-a", "disablesleep", "1"]);
+export async function awakeOn(
+  runner: Runner,
+  reason: string,
+  pid?: number,
+  platform: string = process.platform,
+): Promise<void> {
+  if (isLinux(platform)) await inhibitStart(runner, reason);
+  else await sudoPmset(runner, ["-a", "disablesleep", "1"]);
   if (!runner.dryRun) await saveAwake({ since: new Date().toISOString(), reason, pid });
 }
 
-export async function awakeOff(runner: Runner): Promise<void> {
-  await sudoPmset(runner, ["-a", "disablesleep", "0"]);
+export async function awakeOff(runner: Runner, platform: string = process.platform): Promise<void> {
+  if (isLinux(platform)) await inhibitStop(runner);
+  else await sudoPmset(runner, ["-a", "disablesleep", "0"]);
   if (!runner.dryRun) await saveAwake(null);
 }
 
@@ -86,15 +115,18 @@ export function pidAlive(pid: number): boolean {
   }
 }
 
-export async function awakeStatus(runner: Runner): Promise<AwakeStatus> {
-  const disabled = await sleepDisabled(runner);
+export async function awakeStatus(
+  runner: Runner,
+  platform: string = process.platform,
+): Promise<AwakeStatus> {
+  const disabled = await sleepDisabled(runner, platform);
   const state = await loadAwake();
   const dead = state?.pid !== undefined && !pidAlive(state.pid);
   return {
     sleepDisabled: disabled,
     state,
     orphan: disabled && (!state || dead),
-    battery: await battery(runner),
+    battery: await battery(runner, platform),
   };
 }
 
@@ -102,11 +134,19 @@ export async function awakeStatus(runner: Runner): Promise<AwakeStatus> {
  * Un tick del guardián: sin cargador y por debajo del mínimo, quita el modo y,
  * si la tapa está cerrada, duerme el Mac. Devuelve true si cortó.
  */
-export async function guardTick(runner: Runner, min = MIN_BATTERY): Promise<boolean> {
-  const b = await battery(runner);
+export async function guardTick(
+  runner: Runner,
+  min = MIN_BATTERY,
+  platform: string = process.platform,
+): Promise<boolean> {
+  const b = await battery(runner, platform);
   if (b.ac || b.percent === null || b.percent >= min) return false;
   log.warn(`Batería al ${b.percent} % sin cargador: se quita el modo tapa.`);
-  await awakeOff(runner);
+  await awakeOff(runner, platform);
+  if (isLinux(platform)) {
+    if (await lidClosedLinux(runner)) await suspendLinux(runner);
+    return true;
+  }
   const lid = await runner.query("ioreg", ["-r", "-k", "AppleClamshellState", "-d", "1"]);
   if (parseClamshellClosed(lid.stdout)) await runner.exec("sudo", ["-n", PMSET, "sleepnow"]);
   return true;
@@ -121,19 +161,20 @@ export async function withAwake<T>(
   reason: string,
   fn: () => Promise<T>,
   intervalMs = 60_000,
+  platform: string = process.platform,
 ): Promise<T> {
-  await awakeOn(runner, reason, process.pid);
+  await awakeOn(runner, reason, process.pid, platform);
   let cut = false;
   const timer = setInterval(() => {
     if (!cut)
-      void guardTick(runner).then(
+      void guardTick(runner, MIN_BATTERY, platform).then(
         (c) => (cut = c),
         () => {},
       );
   }, intervalMs);
   const restore = () => {
     clearInterval(timer);
-    return cut ? Promise.resolve() : awakeOff(runner);
+    return cut ? Promise.resolve() : awakeOff(runner, platform);
   };
   const onSignal = (sig: NodeJS.Signals) => {
     void restore().finally(() => process.kill(process.pid, sig));

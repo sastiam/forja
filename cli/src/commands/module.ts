@@ -33,7 +33,9 @@ export async function moduleCommand(argv: string[]): Promise<number> {
     out(
       `  depende de: ${m.depends.join(", ") || "—"}  (orden: ${resolveOrder(all, [name]).join(" → ")})`,
     );
-    out(`  targets: ${m.targets.join(", ") || "—"}`);
+    out(
+      `  targets: ${[...m.targets, ...m.targetsDarwin.map((t) => `${t} (solo macOS)`)].join(", ") || "—"}`,
+    );
     out(
       `  estado: ${!profile ? "sin perfil" : enabled.includes(name) ? "habilitado" : "deshabilitado"}`,
     );

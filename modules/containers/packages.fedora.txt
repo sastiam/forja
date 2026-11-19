@@ -1,0 +1,2 @@
+# AWS CLI v2. El motor de Docker NO se instala aquí (moby-engine o docker-ce: lo eliges tú, ver README).
+awscli2

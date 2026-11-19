@@ -1,11 +1,16 @@
 name = "containers"
-summary = "Colima + Docker CLI + Floci + AWS CLI + CDK (AWS local)"
-os = ["darwin"]
+summary = "Docker (Colima en macOS, nativo en Linux) + AWS CLI + CDK + Floci (AWS local)"
+os = ["darwin", "linux"]
 depends = ["core"]
-targets = ["~/.aws/config", "~/.aws/credentials", "~/.config/forja/bin/colima-ensure", "~/.config/forja/bin/colima-idle"]
+targets = ["~/.aws/config", "~/.aws/credentials"]
+# Solo macOS: arranque bajo demanda y apagado automático de Colima.
+targets_darwin = ["~/.config/forja/bin/colima-ensure", "~/.config/forja/bin/colima-idle"]
 risk = "medium"
 requires_sudo = true
 optional = false
 
 [checks]
-commands = ["docker context show", "floci --version", "aws --version", "cdk --version"]
+commands = ["aws --version", "cdk --version"]
+
+[checks.darwin]
+commands = ["docker context show", "floci --version"]

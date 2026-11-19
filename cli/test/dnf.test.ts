@@ -134,7 +134,7 @@ test("el host fedora está soportado y cada módulo suyo funciona en Linux con s
   }
 });
 
-test("ningún apply de módulo Linux llama a comandos exclusivos de macOS sin comprobar el SO", async () => {
+test("un apply de módulo Linux solo menciona comandos de macOS si desvía Linux antes", async () => {
   const root = repoRoot();
   const host = await loadHost(root, "fedora");
   const all = await loadModules(root);
@@ -143,9 +143,10 @@ test("ningún apply de módulo Linux llama a comandos exclusivos de macOS sin co
     const m = all.get(name);
     if (!m?.hasApply) continue;
     const src = await readFile(join(m.dir, "apply.ts"), "utf8");
+    if (!/\b(pmset|osascript|launchctl|softwareupdate|defaults write|colima)\b/.test(src)) continue;
     assert.ok(
-      !/\b(pmset|osascript|launchctl|defaults write)\b/.test(src),
-      `${name}/apply.ts usa APIs de macOS`,
+      /ctx\.platform === "linux"/.test(src),
+      `${name}/apply.ts usa APIs de macOS y no desvía Linux con ctx.platform === "linux"`,
     );
   }
 });

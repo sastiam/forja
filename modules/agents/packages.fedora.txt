@@ -1,2 +1,5 @@
 # uv lo usa el MCP de aws-core (uvx). opencode y rtk llegan por mise (home/private_dot_config/mise).
 uv
+# El sandbox de Claude Code en Linux: bubblewrap aísla el sistema de archivos y socat saca la red por un proxy.
+bubblewrap
+socat

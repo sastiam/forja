@@ -9,11 +9,16 @@ import { log, out } from "../core/log.ts";
 import { LOOPER_BIN, LOOPER_ENGINES, type LooperEngine } from "../core/looper.ts";
 import { expandHome, profilePath, repoRoot } from "../core/paths.ts";
 import { battery, withAwake } from "../core/power.ts";
+
 import { loadProfile, type Profile } from "../core/profile.ts";
 import { commandExists, createRunner, type Runner } from "../core/runners/shell.ts";
 import { logsDir } from "../core/state.ts";
 import { defaultBase, mainRepoRoot } from "./git.ts";
 import { createWorktree } from "./new.ts";
+
+/** SO con modo tapa (forja awake): macOS con pmset, Linux con systemd-inhibit. */
+const LID_PLATFORMS = ["darwin", "linux"];
+
 import {
   insidePreflight,
   nightSettings,
@@ -156,8 +161,8 @@ export async function preflight(
       detail: `salió con ${gate.code}: ${(gate.stderr || gate.stdout).trim().split("\n").slice(-GATE_DETAIL_LINES).join(" | ")}`,
     });
   }
-  if (platform === "darwin") {
-    const b = await battery(runner);
+  if (platform === "darwin" || platform === "linux") {
+    const b = await battery(runner, platform);
     p.push({
       name: "corriente conectada",
       ok: b.ac || o.allowBattery,
@@ -310,10 +315,9 @@ export async function wtNight(argv: string[]): Promise<number> {
   // 4. Loop con el modo tapa activo; se quita siempre al salir.
   const start = Date.now();
   const run = () => runner.exec(LOOPER_BIN, args, { stream: true });
-  const r =
-    process.platform === "darwin"
-      ? await withAwake(runner, `wt night ${o.branch}`, run)
-      : await run();
+  const r = LID_PLATFORMS.includes(process.platform)
+    ? await withAwake(runner, `wt night ${o.branch}`, run)
+    : await run();
   const mins = Math.round((Date.now() - start) / 60000);
   const msg =
     r.code === 0
