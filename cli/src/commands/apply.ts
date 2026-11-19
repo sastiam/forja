@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { totalmem } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
+import { loadOverlay } from "../core/claude-overlay.ts";
 import { settingsData as claudePluginsData } from "../core/claude-plugins.ts";
 import { claudeSandbox } from "../core/claude-sandbox.ts";
 import { load } from "../core/context.ts";
@@ -41,6 +42,14 @@ export function zedTsMemoryMb(memBytes: number): number {
 /** Escribe ~/.config/chezmoi/chezmoi.toml derivado del perfil (datos personales: solo en la máquina). */
 export async function writeChezmoiConfig(ctx: Ctx): Promise<void> {
   const p = ctx.profile;
+  const overlay = await loadOverlay();
+  if (overlay?.overrides.length)
+    log.warn(
+      `claude.settings.json (local) reemplaza claves que forja gestiona: ${overlay.overrides.join(", ")}` +
+        (overlay.overrides.some((k) => k === "sandbox" || k === "permissions")
+          ? " — incluye seguridad (sandbox/permissions); forja doctor avisa si el sandbox no coincide"
+          : ""),
+    );
   const data: TomlTable = {
     host: ctx.host.name,
     modules: ctx.enabled,
@@ -53,6 +62,8 @@ export async function writeChezmoiConfig(ctx: Ctx): Promise<void> {
     claude_model: p.claude.model ?? "",
     /** Vacío = la plantilla no escribe "theme" (lo que guarda /config). */
     claude_theme: p.claude.theme ?? "",
+    /** Capa personal de settings.json (claves de primer nivel que se añaden al final); "" = ninguna. */
+    claude_overlay: overlay?.fragment ?? "",
     zed_ts_memory_mb: zedTsMemoryMb(totalmem()),
     /** Marketplaces y plugins de Claude Code (settings.json); ADR 0012. */
     ...claudePluginsData(ctx.root, p.claude.plugins_skip),

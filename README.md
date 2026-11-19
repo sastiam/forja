@@ -73,6 +73,10 @@ Fuente única en `skills/`, enlazada a Claude Code. Las skills de forja solo lla
 
 Para no activar alguno: `[claude] plugins_skip` en el perfil.
 
+## Configuración que ya tienes
+
+Si tu máquina ya tiene `~/.claude/settings.json`, la config de Ghostty u otras, **no las pierdas con `forja apply`**: guárdalas en `~/.config/forja/local/` y forja las añade encima. Guía: [`docs/guide/configuracion-personal.md`](docs/guide/configuracion-personal.md).
+
 ## Hosts soportados
 
 | Host | Estado |

@@ -6,3 +6,6 @@ window-save-state = always
 shell-integration = zsh
 # Valores: never | unfocused | always (desde Ghostty 1.3; `ghostty +show-config --default --docs`)
 notify-on-command-finish = unfocused
+# Tus ajustes personales (tema, fuente, pestañas…): este archivo local gana sobre lo anterior, y si no
+# existe se ignora (el «?» lo hace opcional; sin él, Ghostty falla). Ver docs/guide/configuracion-personal.md
+config-file = ?~/.config/forja/local/ghostty.conf
