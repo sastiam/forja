@@ -78,7 +78,7 @@ Para no activar alguno: `[claude] plugins_skip` en el perfil.
 | Host | Estado |
 |---|---|
 | Mac (Apple silicon, macOS 26+) | ✅ |
-| Fedora 44+ (x86_64) | 🧪 en desarrollo: `core`, `shell`, `git`, `runtimes`, `agents`, `containers` (Docker nativo), `worktrees` y `looper` (`wt night` con cascade v2); `forja awake` con systemd |
+| Fedora 44+ (x86_64) | 🧪 en desarrollo: `core`, `shell`, `git`, `runtimes`, `agents`, `containers` (Docker nativo), `worktrees`, `looper` (`wt night` con cascade v2), `terminal`, `editor` y `browsers`; `forja awake` con systemd. Los repos de terceros (COPR, Sublime, Google) solo se habilitan si los listas en `[fedora] trusted_repos` |
 | Raspberry Pi | 🗓 planificado |
 
 ## Seguridad y privacidad

@@ -14,7 +14,8 @@ const rows = mods.map((m) => {
       : [];
   const mac = names(join(m.dir, "Brewfile"), /^(brew|cask|tap) "([^"]+)"/);
   const fedora = names(join(m.dir, "packages.fedora.txt"), /^([A-Za-z0-9][^\s#]*)/);
-  const pkgs = [mac.length ? `macOS: ${mac.join(", ")}` : "", fedora.length ? `Fedora: ${fedora.join(", ")}` : ""].filter(Boolean).join("<br>") || "—";
+  const terceros = names(join(m.dir, "thirdparty.fedora.toml"), /^packages\s*=\s*\[(.*)\]/).flatMap((l) => l.replace(/["\s]/g, "").split(","));
+  const pkgs = [mac.length ? `macOS: ${mac.join(", ")}` : "", fedora.length ? `Fedora: ${fedora.join(", ")}` : "", terceros.length ? `Fedora (terceros, con confianza): ${terceros.join(", ")}` : ""].filter(Boolean).join("<br>") || "—";
   const revert = existsSync(join(m.dir, "revert.md")) ? readFileSync(join(m.dir, "revert.md"), "utf8") : "—";
   return `| \`${m.name}\` | ${cell(m.summary)} | ${cell(pkgs || "—")} | ${m.targets.map((t) => `\`${t}\``).join(", ") || "—"} | ${m.risk} | ${cell(revert)} |`;
 });

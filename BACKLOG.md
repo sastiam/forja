@@ -20,7 +20,9 @@
 - [x] fedora: `looper` en el host y cascade v2 (fase 3).
 - [ ] cascade: su devDependency `@fission-ai/openspec` está en ^1.17 y `openspec-cascade doctor` usa ese binario local, no el global 2.x; valorar subirla a 2.1 en el repo de cascade.
 - [ ] ci: las acciones de `ci.yml` (`actions/*`, `gitleaks/gitleaks-action`) van por etiqueta (`@v4`), no por SHA completo; fijarlas por SHA como pide la línea base de seguridad.
-- [ ] fedora: `terminal` (Ghostty vía COPR), `editor` (Zed, fuente), `browsers`; `mergiraf` y `1password-cli` no están en dnf ni en mise.
+- [x] fedora: `terminal`, `editor` y `browsers` (fase 4, ADR 0017).
+- [ ] fedora: `mergiraf` y `1password-cli` no están en dnf ni en mise. mergiraf se podría instalar con `cargo:mergiraf` de mise (compila desde fuente: necesita gcc) o con el binario de Codeberg fijado por SHA-256.
+- [ ] fedora: `dnf` + `rpm --import` de claves GPG de los repos de terceros: hoy se confía en que `dnf -y` importe la clave del repo al instalar.
 - [ ] fedora: job de CI con contenedor `fedora` que ejecute `forja plan --json`.
 - [ ] raspi: perfil mínimo arm64.
 
