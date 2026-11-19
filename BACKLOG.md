@@ -17,7 +17,9 @@
 - [x] fedora: `containers` con Docker nativo, `awake` con systemd-inhibit y sandbox de Claude con bubblewrap (ADR 0016).
 - [ ] fedora: Floci no tiene binario instalable (solo tap de Homebrew); `doctor` no lo exige en Linux.
 - [ ] fedora: Docker/Podman *rootless* para que los agentes usen contenedores sin dar root (plan B del ADR 0016).
-- [ ] fedora: `looper` en el host (depende de alinear cascade v2, fase 3).
+- [x] fedora: `looper` en el host y cascade v2 (fase 3).
+- [ ] cascade: su devDependency `@fission-ai/openspec` está en ^1.17 y `openspec-cascade doctor` usa ese binario local, no el global 2.x; valorar subirla a 2.1 en el repo de cascade.
+- [ ] ci: las acciones de `ci.yml` (`actions/*`, `gitleaks/gitleaks-action`) van por etiqueta (`@v4`), no por SHA completo; fijarlas por SHA como pide la línea base de seguridad.
 - [ ] fedora: `terminal` (Ghostty vía COPR), `editor` (Zed, fuente), `browsers`; `mergiraf` y `1password-cli` no están en dnf ni en mise.
 - [ ] fedora: job de CI con contenedor `fedora` que ejecute `forja plan --json`.
 - [ ] raspi: perfil mínimo arm64.
