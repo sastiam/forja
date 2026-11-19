@@ -34,5 +34,7 @@
   "enabledPlugins": {{ get . "claude_plugins" | default dict | toJson }},
   "statusLine": { "type": "command", "command": "~/.claude/statusline.sh" }{{ with get . "claude_model" }},
   "model": {{ toJson . }}{{ end }}{{ with get . "claude_theme" }},
-  "theme": {{ toJson . }}{{ end }}
+  "theme": {{ toJson . }}{{ end }}{{ with get . "claude_overlay" }},
+  {{- /* Capa personal (~/.config/forja/local/claude.settings.json): al final, así gana ante claves repetidas. */}}
+  {{ . }}{{ end }}
 }

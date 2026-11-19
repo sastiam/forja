@@ -5,7 +5,7 @@
 
 ## Contexto
 
-`~/.claude/settings.json` lo genera chezmoi a partir de `home/private_dot_claude/settings.json.tmpl`. En el Mac se
+`~/.claude/settings.json` lo genera chezmoi a partir de `home/private_dot_claude/private_settings.json.tmpl`. En el Mac se
 añadieron a mano `sandbox.network.allowedDomains` (github.com, api.github.com) y `sandbox.filesystem.allowRead`
 (la identidad de git en `~/.config/forja/local/git.local.gitconfig`). Sin ellos, git y gh fallan dentro del sandbox. Esas
 claves no estaban en el repo, así que un `forja apply` las habría borrado. Además, los dominios que necesita una

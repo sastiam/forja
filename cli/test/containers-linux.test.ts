@@ -102,7 +102,7 @@ test("el sandbox de Claude en Linux no recibe el socket de Docker (equivale a ro
   );
   assert.equal(sb.enabled, true, "en Fedora el sandbox va activo por defecto");
   const plantilla = await import("node:fs/promises").then((f) =>
-    f.readFile(`${repoRoot()}/home/private_dot_claude/settings.json.tmpl`, "utf8"),
+    f.readFile(`${repoRoot()}/home/private_dot_claude/private_settings.json.tmpl`, "utf8"),
   );
   const linea = plantilla.split("\n").find((l) => l.includes("allowUnixSockets")) ?? "";
   assert.ok(

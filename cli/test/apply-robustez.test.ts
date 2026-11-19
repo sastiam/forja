@@ -30,7 +30,10 @@ function renderSettings(data: string): unknown {
   const dir = mkdtempSync(join(tmpdir(), "forja-tmpl-"));
   const cfg = join(dir, "chezmoi.toml");
   writeFileSync(cfg, `[data]\nmodules = ["git", "worktrees"]\n${data}`);
-  const tmpl = readFileSync(join(root, "home/private_dot_claude/settings.json.tmpl"), "utf8");
+  const tmpl = readFileSync(
+    join(root, "home/private_dot_claude/private_settings.json.tmpl"),
+    "utf8",
+  );
   const out = execFileSync("chezmoi", ["--config", cfg, "--source", dir, "execute-template"], {
     input: tmpl,
     encoding: "utf8",
@@ -99,14 +102,17 @@ test("CLAUDE.md: la regla de op:// solo aparece con secrets.provider = 1password
   }
 });
 
-test("settings.json: con containers permite el socket de Colima y añade el hook", {
+test("settings.json: el socket de Colima y su hook solo existen en macOS (ADR 0016)", {
   skip: !hasChezmoi && "chezmoi no instalado",
 }, () => {
   const dir = mkdtempSync(join(tmpdir(), "forja-tmpl-"));
   const cfg = join(dir, "chezmoi.toml");
   const render = (modules: string) => {
     writeFileSync(cfg, `[data]\nmodules = ${modules}\n`);
-    const tmpl = readFileSync(join(root, "home/private_dot_claude/settings.json.tmpl"), "utf8");
+    const tmpl = readFileSync(
+      join(root, "home/private_dot_claude/private_settings.json.tmpl"),
+      "utf8",
+    );
     return JSON.parse(
       execFileSync("chezmoi", ["--config", cfg, "--source", dir, "execute-template"], {
         input: tmpl,
@@ -115,9 +121,15 @@ test("settings.json: con containers permite el socket de Colima y añade el hook
     );
   };
   const on = render('["containers", "worktrees"]');
-  assert.match(on.sandbox.network.allowUnixSockets[0], /^\/.*\/\.colima\/default\/docker\.sock$/);
-  assert.equal(on.hooks.PreToolUse[0].matcher, "Bash");
-  assert.match(on.hooks.PreToolUse[0].hooks[0].command, /colima-up\.sh$/);
+  if (process.platform === "darwin") {
+    assert.match(on.sandbox.network.allowUnixSockets[0], /^\/.*\/\.colima\/default\/docker\.sock$/);
+    assert.equal(on.hooks.PreToolUse[0].matcher, "Bash");
+    assert.match(on.hooks.PreToolUse[0].hooks[0].command, /colima-up\.sh$/);
+  } else {
+    // En Linux Docker es nativo: darle el socket a un agente equivaldría a darle root (ADR 0016).
+    assert.equal(on.sandbox.network.allowUnixSockets, undefined);
+    assert.equal(on.hooks.PreToolUse, undefined);
+  }
   const off = render('["worktrees"]');
   assert.equal(off.sandbox.network.allowUnixSockets, undefined);
   assert.equal(off.hooks.PreToolUse, undefined);

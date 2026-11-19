@@ -26,6 +26,9 @@
 - [ ] fedora: job de CI con contenedor `fedora` que ejecute `forja plan --json`.
 - [ ] raspi: perfil mínimo arm64.
 
+- [ ] zed: sin capa personal (Zed no admite includes en `settings.json`); valorar un merge con `modify_` y jq si el archivo es JSON puro, o `create_` (no pisar) solo en Linux.
+- [ ] agents: valorar la misma capa personal para `~/.config/opencode/opencode.json`.
+
 ## Ideas
 - [x] `forja report`: exportar el estado de la máquina a Markdown para el vault de Obsidian (hecho en Unreleased).
 - [ ] Rust: módulo opcional con sccache (CARGO_INCREMENTAL=0) si el uso deja de ser ocasional.
