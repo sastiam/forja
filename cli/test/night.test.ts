@@ -9,6 +9,7 @@ import { createFakeRunner } from "../src/core/runners/shell.ts";
 import {
   cascadeArgs,
   defaultBranch,
+  doctorFailures,
   missingChanges,
   missingChangesAt,
   type NightOpts,
@@ -114,6 +115,7 @@ test("preflight: exige looper, changes existentes y corriente", async () => {
     p.map((x) => [x.name, x.ok]),
     [
       ["openspec-cascade instalado", true],
+      ["openspec-cascade doctor", true],
       ["changes de OpenSpec", true],
       ["spec-gate (review)", true],
       ["corriente conectada", false],
@@ -206,4 +208,61 @@ test("preflight con sandbox: exige motor claude y openspec-cascade con --setting
   );
   assert.deepEqual(sbx(agy)[0], ["sandbox: motor claude", false]);
   assert.deepEqual(sbx(await preflight(runner(""), repo, opts(), "linux")), []);
+});
+
+test("cascadeArgs pasa --mode solo si se pidió", () => {
+  assert.ok(!cascadeArgs("/wt", opts(), "/logs").includes("--mode"));
+  const args = cascadeArgs("/wt", opts({ mode: "v2" }), "/logs");
+  assert.deepEqual(args.slice(args.indexOf("--mode"), args.indexOf("--mode") + 2), [
+    "--mode",
+    "v2",
+  ]);
+});
+
+test("wt night rechaza un --mode desconocido antes de tocar nada", async () => {
+  assert.equal(await wtNight(["--changes", "a", "--mode", "v9"]), 1);
+  assert.equal(await wtNight(["--changes", "a", "--mode", "jules"]), 1);
+});
+
+test("doctorFailures junta solo las líneas fail del diagnóstico de cascade", () => {
+  const out =
+    "ok   runtime: bun 1.4.4\nwarn engine:opencode: not on PATH\nfail openspec: openspec/ missing\nfail git: dirty\n";
+  assert.equal(doctorFailures(out), "fail openspec: openspec/ missing | fail git: dirty");
+  assert.equal(doctorFailures("ok x\nwarn y\n"), "");
+});
+
+test("preflight: el doctor de cascade bloquea con sus fallos y los avisos no", async () => {
+  const repo = repoWith("a", "b");
+  const answers = (code: number, stdout: string) =>
+    createFakeRunner((cmd, args) => {
+      if (cmd === "openspec-cascade" && args[0] === "doctor") return { code, stdout };
+      return { code: 0 };
+    });
+  const mal = await preflight(
+    answers(1, "fail openspec: openspec/ missing\n"),
+    repo,
+    opts(),
+    "linux",
+  );
+  const d = mal.find((x) => x.name === "openspec-cascade doctor");
+  assert.equal(d?.ok, false);
+  assert.match(d?.detail ?? "", /openspec\/ missing/);
+  const aviso = await preflight(
+    answers(0, "warn greptile: not installed\n"),
+    repo,
+    opts(),
+    "linux",
+  );
+  assert.equal(aviso.find((x) => x.name === "openspec-cascade doctor")?.ok, true);
+});
+
+test("preflight: sin openspec-cascade instalado no ejecuta el doctor", async () => {
+  const repo = repoWith("a", "b");
+  const sin = createFakeRunner((cmd, args) => {
+    if (cmd === "sh") return { code: 1 };
+    return { code: 0, stdout: args.join(" ") };
+  });
+  const p = await preflight(sin, repo, opts(), "linux");
+  assert.ok(!p.some((x) => x.name === "openspec-cascade doctor"));
+  assert.ok(!sin.calls.some((c) => c.startsWith("openspec-cascade doctor")));
 });
