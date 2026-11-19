@@ -78,8 +78,12 @@ export function tildify(p: string): string {
   return p === h || p.startsWith(`${h}/`) ? `~${p.slice(h.length)}` : p;
 }
 
-export function moduleTargets(m: Module): string[] {
-  return m.targets.map(expandHome);
+const platformExtra = (m: Module, platform: string): string[] =>
+  platform === "darwin" ? m.targetsDarwin : [];
+
+/** Rutas de chezmoi del módulo para este SO: las comunes y, en macOS, las de `targets_darwin`. */
+export function moduleTargets(m: Module, platform = "darwin"): string[] {
+  return [...m.targets, ...(platform === "darwin" ? m.targetsDarwin : [])].map(expandHome);
 }
 
 /** Calcula las acciones de un módulo sin modificar nada (solo consultas de lectura). */
@@ -122,12 +126,12 @@ export async function planModule(ctx: Ctx, m: Module): Promise<ModulePlan> {
       pending: state !== "ok",
     });
   }
-  if (m.targets.length && existsSync(chezmoiSource(ctx.root))) {
+  if (moduleTargets(m, ctx.platform).length && existsSync(chezmoiSource(ctx.root))) {
     const source = chezmoiSource(ctx.root);
-    const d = await chezmoi.diff(ctx.runner, source, moduleTargets(m));
+    const d = await chezmoi.diff(ctx.runner, source, moduleTargets(m, ctx.platform));
     const outside =
       d.state === "pending"
-        ? await chezmoi.conflicts(ctx.runner, source, moduleTargets(m), home())
+        ? await chezmoi.conflicts(ctx.runner, source, moduleTargets(m, ctx.platform), home())
         : [];
     const note = outside.length
       ? ` (modificado fuera de chezmoi: ${outside.map(tildify).join(", ")})`
@@ -136,8 +140,8 @@ export async function planModule(ctx: Ctx, m: Module): Promise<ModulePlan> {
       kind: "chezmoi",
       description:
         d.state === "unavailable"
-          ? `chezmoi apply ${m.targets.join(" ")} (chezmoi aún no instalado)`
-          : `chezmoi apply ${m.targets.join(" ")}${note}`,
+          ? `chezmoi apply ${m.targets.concat(platformExtra(m, ctx.platform)).join(" ")} (chezmoi aún no instalado)`
+          : `chezmoi apply ${m.targets.concat(platformExtra(m, ctx.platform)).join(" ")}${note}`,
       pending: d.state !== "ok",
     });
   }

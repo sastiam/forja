@@ -58,7 +58,8 @@ test("plan omite módulos que no aplican al SO", async () => {
     "linux",
   );
   const plans = await computePlan(ctx, all, order);
-  assert.equal(plans.find((p) => p.module === "containers")?.status, "skipped");
+  assert.equal(plans.find((p) => p.module === "macos-base")?.status, "skipped");
+  assert.notEqual(plans.find((p) => p.module === "containers")?.status, "skipped");
   assert.notEqual(plans.find((p) => p.module === "git")?.status, "skipped");
 });
 

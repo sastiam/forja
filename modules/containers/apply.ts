@@ -4,6 +4,7 @@ import { log } from "../../cli/src/core/log.ts";
 import { home } from "../../cli/src/core/paths.ts";
 import type { Action, CheckResult, ModuleCtx } from "../../cli/src/core/plan.ts";
 import type { Runner } from "../../cli/src/core/runners/shell.ts";
+import * as linux from "./linux.ts";
 
 /** Runtime único: Colima (ADR 0007). OrbStack ya no se usa. */
 export const RUNTIME_CONTEXT = "colima";
@@ -222,6 +223,7 @@ async function colimaRunning(runner: Runner): Promise<boolean> {
 }
 
 export async function plan(ctx: ModuleCtx): Promise<Action[]> {
+  if (ctx.platform === "linux") return linux.plan(ctx);
   const size = await machineSize(ctx);
   const actions: Action[] = [];
   if ((await rosetta(ctx.runner)) === "missing")
@@ -274,6 +276,7 @@ export async function plan(ctx: ModuleCtx): Promise<Action[]> {
 }
 
 export async function apply(ctx: ModuleCtx): Promise<void> {
+  if (ctx.platform === "linux") return linux.apply(ctx);
   const { runner } = ctx;
   const size = await machineSize(ctx);
   const vm = size ? await currentVm(runner) : null;
@@ -337,6 +340,12 @@ export async function apply(ctx: ModuleCtx): Promise<void> {
 }
 
 export async function revert(ctx: ModuleCtx): Promise<void> {
+  if (ctx.platform === "linux") {
+    log.info(
+      "containers en Linux no cambia nada que revertir: forja no instala Docker ni toca grupos.",
+    );
+    return;
+  }
   const { runner } = ctx;
   await runner.exec("launchctl", ["bootout", `gui/${await uid(runner)}/${IDLE_LABEL}`]);
   if (existsSync(idlePlistPath())) await runner.remove(idlePlistPath());
@@ -346,6 +355,7 @@ export async function revert(ctx: ModuleCtx): Promise<void> {
 }
 
 export async function check(ctx: ModuleCtx): Promise<CheckResult[]> {
+  if (ctx.platform === "linux") return linux.check(ctx);
   const r = await ctx.runner.query("docker", ["context", "show"]);
   const ctxName = r.stdout.trim();
   const results: CheckResult[] = [

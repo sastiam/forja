@@ -101,7 +101,7 @@ export async function captureCommand(argv: string[]): Promise<number> {
   const source = chezmoiSource(ctx.root);
   if (await commandExists(runner, "chezmoi")) {
     const mod = only ? all.get(only) : undefined;
-    const targets = mod ? moduleTargets(mod) : [];
+    const targets = mod ? moduleTargets(mod, process.platform) : [];
     const st = await runner.query("chezmoi", ["--source", source, "status", ...targets]);
     const changed = changedOnDisk(st.stdout, homedir());
     for (const f of changed) {

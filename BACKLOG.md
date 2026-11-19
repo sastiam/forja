@@ -14,7 +14,10 @@
 
 ## Hosts
 - [x] fedora: módulos core/shell/git/runtimes/agents con dnf (en la rama feat/linux-fedora-host).
-- [ ] fedora: `containers` con Docker nativo, `awake` con systemd-inhibit y sandbox de Claude con bubblewrap.
+- [x] fedora: `containers` con Docker nativo, `awake` con systemd-inhibit y sandbox de Claude con bubblewrap (ADR 0016).
+- [ ] fedora: Floci no tiene binario instalable (solo tap de Homebrew); `doctor` no lo exige en Linux.
+- [ ] fedora: Docker/Podman *rootless* para que los agentes usen contenedores sin dar root (plan B del ADR 0016).
+- [ ] fedora: `looper` en el host (depende de alinear cascade v2, fase 3).
 - [ ] fedora: `terminal` (Ghostty vía COPR), `editor` (Zed, fuente), `browsers`; `mergiraf` y `1password-cli` no están en dnf ni en mise.
 - [ ] fedora: job de CI con contenedor `fedora` que ejecute `forja plan --json`.
 - [ ] raspi: perfil mínimo arm64.

@@ -7,7 +7,7 @@ import { log, out, outJson } from "../core/log.ts";
 import { expandHome } from "../core/paths.ts";
 import { loadHooks, type ModuleCtx, osName } from "../core/plan.ts";
 import { isInteractive } from "../core/prompt.ts";
-import { createRunner, type Runner } from "../core/runners/shell.ts";
+import { commandExists, createRunner, type Runner } from "../core/runners/shell.ts";
 import { signingFindings } from "../core/signing.ts";
 import { loadWorktrees } from "../core/state.ts";
 
@@ -63,6 +63,44 @@ export async function systemChecks(runner: Runner, platform: string): Promise<Fi
   return f;
 }
 
+/**
+ * El sandbox de Claude Code en Linux usa bubblewrap (aislamiento) y socat (red por
+ * proxy). `bwrap` instalado no basta: hay que probar que puede crear el espacio
+ * aislado (espacios de nombres de usuario), que algunos sistemas restringen.
+ */
+export async function sandboxPrereqFindings(
+  runner: Runner,
+  platform: string,
+  wanted: boolean,
+): Promise<Finding[]> {
+  if (platform !== "linux" || !wanted) return [];
+  const bwrap = await runner.query(
+    "bwrap",
+    ["--ro-bind", "/", "/", "--dev", "/dev", "--unshare-user", "true"],
+    {
+      timeoutMs: 15000,
+    },
+  );
+  const socat = await commandExists(runner, "socat");
+  return [
+    {
+      name: "sandbox de Claude: bubblewrap funciona",
+      status: bwrap.code === 0 ? "ok" : "fail",
+      detail:
+        bwrap.code === 0
+          ? undefined
+          : bwrap.code === 127
+            ? "falta bwrap: forja apply agents (dnf install bubblewrap)"
+            : `bwrap no puede aislar (${(bwrap.stderr || "sin detalle").trim().split("\n")[0]}): revisa user.max_user_namespaces y SELinux`,
+    },
+    {
+      name: "sandbox de Claude: socat instalado",
+      status: socat ? "ok" : "fail",
+      detail: socat ? undefined : "falta socat: forja apply agents (dnf install socat)",
+    },
+  ];
+}
+
 /** El sandbox que hay en ~/.claude/settings.json debe coincidir con el que piden host y perfil. */
 export function sandboxFinding(
   wanted: boolean,
@@ -100,7 +138,9 @@ export async function collectFindings(): Promise<Finding[]> {
   }
   if (loaded) {
     const { ctx, all, order } = loaded;
-    findings.push(sandboxFinding(claudeSandbox(ctx.host, ctx.profile, ctx.enabled).enabled));
+    const sandboxWanted = claudeSandbox(ctx.host, ctx.profile, ctx.enabled).enabled;
+    findings.push(sandboxFinding(sandboxWanted));
+    findings.push(...(await sandboxPrereqFindings(ctx.runner, ctx.platform, sandboxWanted)));
     const agentKey = ctx.profile.signing.agent_key;
     if (agentKey) findings.push(...(await signingFindings(ctx.runner, agentKey, ctx.platform)));
     for (const name of order) {

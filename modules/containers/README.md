@@ -1,6 +1,23 @@
 # containers
 
-Colima + Docker CLI + Floci + AWS CLI + CDK (AWS local).
+Docker (Colima en macOS, nativo en Linux) + Floci + AWS CLI + CDK (AWS local).
+
+## En Linux (Fedora)
+
+Docker corre nativo, sin VM (ADR 0016). `forja apply containers` hace solo esto:
+
+- comprueba que `docker.service` esté activo y habilitado, y si no lo está ejecuta `sudo systemctl enable --now docker`;
+- instala `awscli2` con dnf (`packages.fedora.txt`); `cdk` llega con mise (`runtimes`).
+
+Lo que **no** hace, a propósito:
+
+- **No instala el motor de Docker.** Elige tú: `sudo dnf install moby-engine docker-compose` (repos de Fedora) o `docker-ce` (repo oficial de Docker).
+- **No te añade al grupo `docker`.** Si `docker info` dice «permission denied», `plan` y `doctor` te lo indican, pero decides tú: ese grupo equivale a root.
+- **No da el socket de Docker al sandbox de Claude Code**: un agente con el socket podría escapar con `docker run -v /:/host`. En Linux los agentes no usan Docker.
+- **Floci:** no hay binario instalable en Linux todavía (BACKLOG); `doctor` solo lo exige en macOS.
+- Si ya tienes un `~/.aws/config` propio, `forja apply` te avisará antes de sobrescribirlo. Para conservarlo, muévelo a `~/.config/forja/local/aws.local.config`: la plantilla lo incluye.
+
+## En macOS
 
 Colima da el socket Docker que Floci necesita para Lambda/RDS/ECS. Es MIT, así que no requiere licencia en uso comercial. Es el único runtime: OrbStack ya no se usa (`docs/adr/0007-colima-por-defecto.md`), y `doctor` avisa si sigue instalado o si el contexto docker no es `colima`. El perfil `floci` es público; los perfiles SSO reales se añaden desde `aws.local.config`.
 

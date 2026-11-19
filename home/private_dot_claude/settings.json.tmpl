@@ -14,8 +14,8 @@
     "enabled": {{ if hasKey $sb "enabled" }}{{ get $sb "enabled" }}{{ else }}true{{ end }},
     "failIfUnavailable": {{ if hasKey $sb "enabled" }}{{ get $sb "enabled" }}{{ else }}true{{ end }},
     "allowUnsandboxedCommands": false,
-    "network": { "allowedDomains": {{ get $sb "allowed_domains" | default list | toJson }}{{ if has "containers" .modules }},
-      {{- /* Docker para agentes: la VM de Colima solo monta ~/code (ADR 0012). */}}
+    "network": { "allowedDomains": {{ get $sb "allowed_domains" | default list | toJson }}{{ if and (has "containers" .modules) (eq .chezmoi.os "darwin") }},
+      {{- /* Docker para agentes: la VM de Colima solo monta ~/code (ADR 0012). En Linux no se da el socket: el grupo docker equivale a root (ADR 0016). */}}
       "allowUnixSockets": [{{ printf "%s/.colima/default/docker.sock" .chezmoi.homeDir | toJson }}]{{ end }} },
     "filesystem": {
       "allowRead": {{ get $sb "allow_read" | default list | toJson }},
@@ -24,7 +24,7 @@
   },
   "hooks": {
     "Notification": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/notify.sh" }] }],
-    "Stop": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/notify.sh done" }] }]{{ if has "containers" .modules }},
+    "Stop": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/notify.sh done" }] }]{{ if and (has "containers" .modules) (eq .chezmoi.os "darwin") }},
     "PreToolUse": [{ "matcher": "Bash", "hooks": [{ "type": "command", "command": "~/.claude/hooks/colima-up.sh", "timeout": 120 }] }]{{ end }}{{ if has "worktrees" .modules }},
     "WorktreeCreate": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/worktree-create.sh" }] }],
     "WorktreeRemove": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/worktree-remove.sh" }] }]{{ end }}

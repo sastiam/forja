@@ -130,7 +130,9 @@ export async function applyCommand(argv: string[]): Promise<number> {
   const force = values.force === true;
   const targets = order.flatMap((n) => {
     const m = all.get(n);
-    return m && (!m.os.length || m.os.includes(osName(ctx.platform))) ? moduleTargets(m) : [];
+    return m && (!m.os.length || m.os.includes(osName(ctx.platform)))
+      ? moduleTargets(m, ctx.platform)
+      : [];
   });
   const outside = await chezmoi.conflicts(ctx.runner, chezmoiSource(ctx.root), targets, home());
   if (outside.length) {
@@ -179,10 +181,15 @@ export async function applyCommand(argv: string[]): Promise<number> {
           if (r.code !== 0) throw new Error(`dnf install falló (${r.code})`);
         }
       }
-      if (m.targets.length) {
-        const r = await chezmoi.apply(ctx.runner, chezmoiSource(ctx.root), moduleTargets(m), {
-          force,
-        });
+      if (moduleTargets(m, ctx.platform).length) {
+        const r = await chezmoi.apply(
+          ctx.runner,
+          chezmoiSource(ctx.root),
+          moduleTargets(m, ctx.platform),
+          {
+            force,
+          },
+        );
         if (r.code !== 0) throw new Error(`chezmoi apply falló: ${r.stderr.trim()}`);
       }
       await (await loadHooks(m)).apply?.(mctx);

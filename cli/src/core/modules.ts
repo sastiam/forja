@@ -10,6 +10,8 @@ export interface Module {
   os: string[];
   depends: string[];
   targets: string[];
+  /** Rutas extra solo de macOS (`targets_darwin`), p. ej. los scripts de Colima. */
+  targetsDarwin: string[];
   risk: "low" | "medium" | "high";
   requiresSudo: boolean;
   optional: boolean;
@@ -45,6 +47,7 @@ export function parseModule(name: string, dir: string, text: string): Module {
     os: list(t.os),
     depends: list(t.depends),
     targets: list(t.targets),
+    targetsDarwin: list(t.targets_darwin),
     risk,
     requiresSudo: t.requires_sudo === true,
     optional: t.optional === true,

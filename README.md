@@ -78,7 +78,7 @@ Para no activar alguno: `[claude] plugins_skip` en el perfil.
 | Host | Estado |
 |---|---|
 | Mac (Apple silicon, macOS 26+) | ✅ |
-| Fedora 44+ (x86_64) | 🧪 en desarrollo: `core`, `shell`, `git`, `runtimes` y `agents` con dnf (rama `feat/linux-fedora-host`) |
+| Fedora 44+ (x86_64) | 🧪 en desarrollo: `core`, `shell`, `git`, `runtimes`, `agents`, `containers` (Docker nativo) y `worktrees`; `forja awake` con systemd |
 | Raspberry Pi | 🗓 planificado |
 
 ## Seguridad y privacidad
