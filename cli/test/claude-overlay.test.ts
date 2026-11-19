@@ -9,6 +9,8 @@ import {
   ClaudeOverlayError,
   loadOverlay,
   MANAGED_KEYS,
+  OPENCODE_MANAGED_KEYS,
+  OPENCODE_OVERLAY,
   parseOverlay,
 } from "../src/core/claude-overlay.ts";
 import { repoRoot } from "../src/core/paths.ts";
@@ -145,4 +147,51 @@ test("la config de Ghostty incluye el archivo local como OPCIONAL (con ?)", () =
   assert.match(t, /^config-file = \?~\/\.config\/forja\/local\/ghostty\.conf$/m);
   const lines = t.trim().split("\n");
   assert.ok(lines.at(-1)?.startsWith("config-file"), "va al final: lo personal gana");
+});
+
+// OpenCode: mismo mecanismo, otras claves gestionadas.
+test("parseOverlay de OpenCode marca `permission` y `$schema` como claves de forja", () => {
+  const o = parseOverlay(
+    '{"model":"x","permission":{"bash":"allow"}}',
+    OPENCODE_OVERLAY,
+    OPENCODE_MANAGED_KEYS,
+  );
+  assert.deepEqual(o.overrides, ["permission"]);
+  assert.deepEqual(
+    parseOverlay('{"mcp":{}}', OPENCODE_OVERLAY, OPENCODE_MANAGED_KEYS).overrides,
+    [],
+  );
+});
+
+test("render con chezmoi: opencode.json conserva lo personal y el overlay gana", {
+  skip: !hasChezmoi,
+}, () => {
+  const tpl = readFileSync(
+    join(repoRoot(), "home/private_dot_config/opencode/private_opencode.json.tmpl"),
+    "utf8",
+  );
+  const dir = mkdtempSync(join(tmpdir(), "forja-render-oc-"));
+  const cfg = join(dir, "chezmoi.toml");
+  const render = (data: string) => {
+    writeFileSync(cfg, `[data]\n${data}`);
+    return JSON.parse(
+      execFileSync(
+        chezmoi,
+        ["--config", cfg, "--source", join(repoRoot(), "home"), "execute-template"],
+        { input: tpl, encoding: "utf8" },
+      ),
+    );
+  };
+  const o = parseOverlay(
+    '{"model":"anthropic/x","permission":{"bash":"allow","edit":"ask"}}',
+    OPENCODE_OVERLAY,
+    OPENCODE_MANAGED_KEYS,
+  );
+  const con = render(`opencode_overlay = ${JSON.stringify(o.fragment)}\n`);
+  assert.equal(con.model, "anthropic/x");
+  assert.equal(con.permission.bash, "allow", "el overlay gana");
+  assert.equal(con.$schema, "https://opencode.ai/config.json");
+  const sin = render("");
+  assert.equal(sin.permission.bash, "ask");
+  assert.equal(sin.model, undefined);
 });

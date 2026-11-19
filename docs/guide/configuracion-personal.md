@@ -10,6 +10,7 @@
 |---|---|---|---|
 | `~/.claude/CLAUDE.md` | `~/.config/forja/local/CLAUDE.local.md` | forja escribe 4 reglas generales y, debajo, importa tu archivo (`@…`). | Se conserva. Las reglas de forja van primero; las tuyas después. |
 | `~/.claude/settings.json` | `~/.config/forja/local/claude.settings.json` | Las claves de primer nivel de tu archivo se añaden **al final**: conservan lo que forja no gestiona (`model`, `theme`, `tui`, `autoMode`, `effortLevel`…) y, si coinciden con una de forja, **ganan tú**. | Se conserva. `forja apply` avisa si tocas `sandbox` o `permissions`, que son la parte de seguridad. |
+| `~/.config/opencode/opencode.json` | `~/.config/forja/local/opencode.json` | Igual que `settings.json`: sus claves de primer nivel (`model`, `mcp`, `provider`…) se añaden **al final** y, si coinciden con una de forja, **ganas tú**. | Se conserva. `forja apply` avisa si tocas `permission`, la parte de seguridad. |
 | `~/.config/ghostty/config` | `~/.config/forja/local/ghostty.conf` | La config de forja termina con `config-file = ?~/.config/forja/local/ghostty.conf`: tu archivo se lee después y gana. | Se conserva. Si el archivo no existe, se ignora. |
 | `~/.aws/config` (perfiles SSO) | `~/.config/forja/local/aws.local.config` | La plantilla de forja lo incluye al final. | Se conserva. |
 | Identidad y firma de git | `~/.config/forja/local/git.local.gitconfig` | Se incluye desde la config de git de forja. | Se conserva. |
@@ -26,6 +27,13 @@ chmod 600 ~/.config/forja/local/claude.settings.json
 ```
 
 Si más adelante quieres que una de esas claves de forja sea distinta, añádela a ese archivo: gana. Ejemplo: desactivar el sandbox en sesiones interactivas se hace mejor con `[claude] sandbox = false` en tu `profile.toml` (ADR 0015) que con el overlay.
+
+Para OpenCode es igual, sin `jq` si solo quieres tus claves propias:
+
+```sh
+jq 'del(."$schema", .permission)' ~/.config/opencode/opencode.json \
+  > ~/.config/forja/local/opencode.json && chmod 600 ~/.config/forja/local/opencode.json
+```
 
 ## Por qué son archivos aparte y no un solo perfil
 

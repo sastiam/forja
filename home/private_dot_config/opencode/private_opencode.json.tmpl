@@ -4,5 +4,6 @@
   "permission": {
     "bash": "ask",
     "edit": "ask"
-  }
+  }{{ with get . "opencode_overlay" }},
+  {{ . }}{{ end }}
 }

@@ -26,6 +26,13 @@ export const MANAGED_KEYS = [
   "statusLine",
 ] as const;
 
+/**
+ * Capa personal de ~/.config/opencode/opencode.json: mismo mecanismo que la de Claude.
+ * Las claves que forja escribe siempre son `$schema` y `permission` (la parte de seguridad).
+ */
+export const OPENCODE_OVERLAY = "~/.config/forja/local/opencode.json";
+export const OPENCODE_MANAGED_KEYS = ["$schema", "permission"] as const;
+
 export class ClaudeOverlayError extends Error {}
 
 export interface Overlay {
@@ -36,7 +43,11 @@ export interface Overlay {
   overrides: string[];
 }
 
-export function parseOverlay(text: string, where = CLAUDE_OVERLAY): Overlay {
+export function parseOverlay(
+  text: string,
+  where = CLAUDE_OVERLAY,
+  managed: readonly string[] = MANAGED_KEYS,
+): Overlay {
   let value: unknown;
   try {
     value = JSON.parse(text);
@@ -52,12 +63,16 @@ export function parseOverlay(text: string, where = CLAUDE_OVERLAY): Overlay {
       .map((k) => `${JSON.stringify(k)}: ${JSON.stringify((value as Record<string, unknown>)[k])}`)
       .join(", "),
     keys,
-    overrides: keys.filter((k) => (MANAGED_KEYS as readonly string[]).includes(k)),
+    overrides: keys.filter((k) => managed.includes(k)),
   };
 }
 
 /** Lee el overlay del usuario; null si no existe. Un overlay roto es un error, no se ignora. */
-export async function loadOverlay(path = expandHome(CLAUDE_OVERLAY)): Promise<Overlay | null> {
+export async function loadOverlay(
+  path = expandHome(CLAUDE_OVERLAY),
+  where = CLAUDE_OVERLAY,
+  managed: readonly string[] = MANAGED_KEYS,
+): Promise<Overlay | null> {
   let text: string;
   try {
     text = await readFile(path, "utf8");
@@ -65,5 +80,5 @@ export async function loadOverlay(path = expandHome(CLAUDE_OVERLAY)): Promise<Ov
     if ((e as NodeJS.ErrnoException).code === "ENOENT") return null;
     throw e;
   }
-  return parseOverlay(text, CLAUDE_OVERLAY);
+  return parseOverlay(text, where, managed);
 }
