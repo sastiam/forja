@@ -12,6 +12,7 @@ import {
   skillsCheck,
 } from "../src/core/openspec-skills.ts";
 import { createFakeRunner, type ExecOptions, type Runner } from "../src/core/runners/shell.ts";
+import { isolateState } from "./helpers.ts";
 
 const VERSION = "2.0.0";
 const OLD_VERSION = "1.14.3";
@@ -158,6 +159,7 @@ test("skillsCheck: skills al día pasan, faltantes o desfasadas dan el arreglo",
 // installSkills: copia las skills generadas por `openspec init` en un directorio temporal
 
 test("installSkills: copia las skills generadas y no toca directorios ajenos", async () => {
+  isolateState();
   const skills = mkdtempSync(join(tmpdir(), "forja-skills-"));
   mkdirSync(join(skills, "tdd"));
   writeFileSync(join(skills, "tdd", SKILL_FILE), "tdd intacta");
@@ -204,4 +206,69 @@ test("installSkills en dry run: no ejecuta openspec init ni escribe skills", asy
     false,
   );
   assert.equal(existsSync(join(skills, OPENSPEC_SKILLS[0] ?? "x")), false);
+});
+
+// openspec 2.1: las skills ya no traen `generatedBy`; forja anota la versión en su estado
+
+const NEW_VERSION = "2.1.0";
+const skillMdSinVersion =
+  '---\nname: openspec\nmetadata:\n  author: openspec\n  version: "1.0"\n---\n# Skill\n';
+
+function writeSkillSinVersion(dir: string): void {
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, SKILL_FILE), skillMdSinVersion);
+}
+
+test("installSkills (2.1): fija perfil y ámbito, aísla la config global y anota la versión", async () => {
+  isolateState();
+  const skills = mkdtempSync(join(tmpdir(), "forja-skills-"));
+  const calls: { args: string[]; env?: Record<string, string> }[] = [];
+  const base = openspecAt(NEW_VERSION, false);
+  const runner: Runner = {
+    ...base,
+    exec: async (cmd, args, opts?: ExecOptions) => {
+      if (cmd === "openspec" && args[0] === "init") {
+        calls.push({ args, env: opts?.env });
+        for (const name of OPENSPEC_SKILLS)
+          writeSkillSinVersion(join(opts?.cwd ?? "", ".agents", "skills", name));
+      }
+      return base.exec(cmd, args, opts);
+    },
+  };
+  await withSkillsDir(skills, async () => {
+    await installSkills(runner);
+    const [c] = calls;
+    assert.ok(c);
+    assert.deepEqual(c.args, [
+      "init",
+      "--tools",
+      "claude",
+      "--scope",
+      "project",
+      "--profile",
+      "core",
+      "--no-animation",
+    ]);
+    assert.ok(c.env?.XDG_CONFIG_HOME, "usa una config global propia, no la del usuario");
+    assert.notEqual(c.env?.XDG_CONFIG_HOME, process.env.XDG_CONFIG_HOME);
+    assert.equal(c.env?.OPENSPEC_TELEMETRY, "0");
+    assert.equal(existsSync(c.env?.XDG_CONFIG_HOME ?? ""), false, "la config temporal se borra");
+    // Sin `generatedBy` en el SKILL.md, el marcador de forja evita que queden «desfasadas».
+    const ok = await skillsCheck(openspecAt(NEW_VERSION));
+    assert.equal(ok.ok, true, ok.detail);
+    const otra = await skillsCheck(openspecAt("2.2.0"));
+    assert.equal(otra.ok, false);
+    assert.match(otra.detail ?? "", /desfasadas/);
+  });
+});
+
+test("skills sin generatedBy y sin marcador cuentan como desfasadas", async () => {
+  isolateState();
+  const skills = mkdtempSync(join(tmpdir(), "forja-skills-"));
+  for (const name of OPENSPEC_SKILLS) writeSkillSinVersion(join(skills, name));
+  await withSkillsDir(skills, async () => {
+    const r = await skillsCheck(openspecAt(NEW_VERSION));
+    assert.equal(r.ok, false);
+    assert.match(r.detail ?? "", /desfasadas/);
+  });
 });

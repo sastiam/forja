@@ -10,7 +10,7 @@ Esta skill **no contiene lógica**: explica y lanza `forja wt night`, que envuel
 
 ## Qué hace `forja wt night`
 1. **Comprobaciones:**
-   - `openspec-cascade` instalado (`forja apply looper`).
+   - `openspec-cascade` instalado (`forja apply looper`) y su propio diagnóstico, `openspec-cascade doctor --repo <repo>`: solo sus líneas `fail` abortan (runtime, git, OpenSpec, motores, hooks del plugin); los `warn` no.
    - Cada change está **commiteado** en la rama base del worktree (`--base`, por defecto `origin/main`): `openspec/changes/<nombre>/tasks.md`. Si el change solo está en tu rama de trabajo, lanza con `--base <tu-rama>`. Si el worktree ya existe, se busca ahí.
    - **Spec-gate:** `openspec-cascade spec-gate check --stage review --changes <lista>` (en el repo principal). Si no sale 0, aborta antes de crear nada y muestra su salida.
    - Corriente conectada (o `--allow-battery`).
@@ -31,9 +31,9 @@ Esta skill **no contiene lógica**: explica y lanza `forja wt night`, que envuel
    ```
 4. Lanza en una terminal que quede abierta (Ghostty), no dentro de esta sesión:
    ```sh
-   forja wt night --changes a,b [--base rama] [--engine claude|opencode|antigravity] [--full-gate]
+   forja wt night --changes a,b [--base rama] [--engine claude|opencode|antigravity] [--mode v1|v2] [--full-gate]
    ```
-   Usa `--full-gate` en changes de dependencias o toolchain. `wt night` no reenvía flags a openspec-cascade: un argumento que no reconoce es un error.
+   `--mode` elige el pipeline de cascade: `v1` (por defecto, tarea a tarea) o `v2` (desarrollo guiado por especificaciones con QA autónomo). Usa `--full-gate` en changes de dependencias o toolchain. `wt night` no reenvía flags a openspec-cascade: un argumento que no reconoce es un error.
 5. Por la mañana: `forja wt ls`, revisa la rama `agent/night-…` y las tareas humanas que openspec-cascade listó al final. Luego `forja wt integrate` (skill `worktree-integrate`) y PR.
 
 ## Reglas

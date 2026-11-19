@@ -6,7 +6,13 @@ import { claudeSandbox } from "../core/claude-sandbox.ts";
 import { ensureWorktreeIdentity } from "../core/git-identity.ts";
 import { enabledModuleNames, loadHost } from "../core/hosts.ts";
 import { log, out } from "../core/log.ts";
-import { LOOPER_BIN, LOOPER_ENGINES, type LooperEngine } from "../core/looper.ts";
+import {
+  LOOPER_BIN,
+  LOOPER_ENGINES,
+  LOOPER_MODES,
+  type LooperEngine,
+  type LooperMode,
+} from "../core/looper.ts";
 import { expandHome, profilePath, repoRoot } from "../core/paths.ts";
 import { battery, withAwake } from "../core/power.ts";
 
@@ -45,6 +51,8 @@ export interface NightOpts {
   model?: string;
   /** Esfuerzo de razonamiento; sin él, openspec-cascade usa el suyo por defecto. */
   effort?: string;
+  /** Pipeline de openspec-cascade (`--mode`); sin él, usa el suyo (v1). */
+  mode?: LooperMode;
 }
 
 export interface Preflight {
@@ -95,6 +103,7 @@ export function cascadeArgs(
     logDir,
     ...(o.model ? ["--model", o.model] : []),
     ...(o.effort ? ["--effort", o.effort] : []),
+    ...(o.mode ? ["--mode", o.mode] : []),
     ...(o.fullGate ? ["--full-gate"] : []),
     ...(settingsPath ? ["--settings", settingsPath] : []),
   ];
@@ -106,6 +115,17 @@ const GATE_DETAIL_LINES = 3;
 /** Gate de specs antes de lanzar: cualquier código distinto de 0 aborta la noche. */
 export function specGateArgs(changes: string[]): string[] {
   return ["spec-gate", "check", "--stage", "review", "--changes", changes.join(",")];
+}
+
+const DOCTOR_TIMEOUT_MS = 60000;
+
+/** Líneas `fail …` de `openspec-cascade doctor`, en una sola línea. */
+export function doctorFailures(stdout: string): string {
+  return stdout
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith("fail"))
+    .join(" | ");
 }
 
 /** Rama por defecto: agent/night-<primer change>-<AAAAMMDD>. */
@@ -139,6 +159,17 @@ export async function preflight(
       name: `${LOOPER_BIN} acepta --settings`,
       ok: help.stdout.includes("--settings"),
       detail: "versión antigua: forja apply looper",
+    });
+  }
+  // El diagnóstico de cascade (runtime, git, OpenSpec, motores, hooks del plugin): solo sus `fail` bloquean.
+  if (await commandExists(runner, LOOPER_BIN)) {
+    const doc = await runner.query(LOOPER_BIN, ["doctor", "--repo", repo], {
+      timeoutMs: DOCTOR_TIMEOUT_MS,
+    });
+    p.push({
+      name: `${LOOPER_BIN} doctor`,
+      ok: doc.code === 0,
+      detail: doctorFailures(doc.stdout) || `salió con ${doc.code}`,
     });
   }
   const missing = o.base
@@ -203,7 +234,7 @@ async function notify(profile: Profile | null, message: string): Promise<void> {
 }
 
 const HELP =
-  "uso: forja wt night --changes a,b [--engine claude|opencode|antigravity] [--branch nombre] [--base rama] [--model m] [--effort nivel] [--full-gate] [--allow-battery] [--host h]… [--no-sandbox] [--dry-run]";
+  "uso: forja wt night --changes a,b [--engine claude|opencode|antigravity] [--branch nombre] [--base rama] [--model m] [--effort nivel] [--mode v1|v2] [--full-gate] [--allow-battery] [--host h]… [--no-sandbox] [--dry-run]";
 
 export async function wtNight(argv: string[]): Promise<number> {
   const { values } = parseArgs({
@@ -217,6 +248,7 @@ export async function wtNight(argv: string[]): Promise<number> {
       base: { type: "string" },
       model: { type: "string" },
       effort: { type: "string" },
+      mode: { type: "string" },
       "full-gate": { type: "boolean" },
       "allow-battery": { type: "boolean" },
       host: { type: "string", multiple: true },
@@ -227,6 +259,10 @@ export async function wtNight(argv: string[]): Promise<number> {
   const engine = (values.engine ?? "claude") as LooperEngine;
   if (!LOOPER_ENGINES.includes(engine)) {
     log.error(`--engine inválido: ${engine}\n${HELP}`);
+    return 1;
+  }
+  if (values.mode !== undefined && !LOOPER_MODES.includes(values.mode as LooperMode)) {
+    log.error(`--mode inválido: ${values.mode} (usa ${LOOPER_MODES.join(" o ")})\n${HELP}`);
     return 1;
   }
   const changes = (values.changes ?? "")
@@ -243,6 +279,7 @@ export async function wtNight(argv: string[]): Promise<number> {
     sandbox: values["no-sandbox"] !== true,
     model: values.model,
     effort: values.effort,
+    mode: values.mode as LooperMode | undefined,
   };
   const runner = createRunner(false);
   const repo = await mainRepoRoot(runner, process.cwd());

@@ -7,6 +7,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 ### Added
 - Host **Fedora** (hito v0.4.0, en curso): `hosts/fedora.toml` pasa a `supported` con `core`, `shell`, `git`, `runtimes` y `agents`. Cada módulo declara sus paquetes en `packages.fedora.txt` (el equivalente al Brewfile); `plan` muestra lo que falta y `apply` instala solo eso con `sudo dnf install -y`. `bootstrap.sh` ya no sale en Linux: instala git con dnf y mise con su instalador oficial en `~/.local/bin`. Los repos de terceros (COPR, docker-ce…) no se añaden solos.
 - Fedora, fase 2 (ADR 0016): **`containers`** con Docker nativo (comprueba y habilita `docker.service`; no instala el motor ni toca el grupo `docker`; sin socket de Docker en el sandbox de Claude); **`forja awake`** y `wt night` con modo tapa vía `systemd-inhibit` (sin sudo) y guardián de batería con `/sys/class/power_supply`; **sandbox de Claude** con bubblewrap y socat (`agents` los instala, `doctor` comprueba que `bwrap` aísle de verdad). `worktrees` y `containers` entran en `hosts/fedora.toml`.
+- Fedora, fase 3 (cascade v2): **`looper`** entra en `hosts/fedora.toml`; **`LOOPER_REF`** sube a `6c3da8c` (cascade v2); **`wt night --mode v1|v2`** y comprobación previa con `openspec-cascade doctor`; mise fija **OpenSpec 2.1.0** (antes 2.0.0). Nuevo job de CI **`plan (fedora)`**: contenedor `fedora:44` con `npm test`, `bootstrap.sh --dry-run` y `forja plan --json` (exige acciones dnf).
 - `module.toml`: `targets_darwin` para rutas solo de macOS (los scripts de Colima ya no se aplican en Linux).
 - `module.toml`: comprobaciones por SO (`[checks.darwin]`, `[checks.linux]`); `core` ya no exige `brew` en Linux.
 - `runtimes`: en Linux, mise instala `opencode`, `rtk` y `biome` (no están en dnf; en macOS los trae el Brewfile).
@@ -27,6 +28,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - `wt night` ejecuta `openspec-cascade spec-gate check --stage review --changes <lista>` en las comprobaciones previas y aborta, sin crear el worktree, si no sale 0. La skill `night-run` lo documenta.
 
 ### Changed
+- **OpenSpec 2.1** (`agents`): `openspec init` ya no genera las skills con la config por defecto y sus `SKILL.md` ya no traen `generatedBy`. `forja` ahora llama a `openspec init --tools claude --scope project --profile core` con una config global aislada (`XDG_CONFIG_HOME` temporal, sin telemetría), así que el resultado no depende de la máquina, y anota la versión que las generó en `~/.local/state/forja/openspec-skills.json` para detectar skills desfasadas.
 - Lint arreglado: `biome.json` migrado al esquema de Biome 2.6.6 (CI fallaba en `main`).
 - Sandbox de Claude Code configurable en sesiones interactivas (ADR 0015): `[claude] sandbox` en el host y en el perfil (perfil > host > activo). En `macbook` queda desactivado; `wt night` lo exige siempre. `forja doctor` avisa si `settings.json` no coincide.
 - `editor`: la plantilla de Zed fija el tema Tokyo Night Storm, los iconos Catppuccin Macchiato y el panel de proyecto a la izquierda, para que `forja apply editor` no pise las preferencias personales.

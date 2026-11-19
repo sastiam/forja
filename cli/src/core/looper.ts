@@ -8,10 +8,17 @@ import { home } from "./paths.ts";
  */
 export const LOOPER_REPO = "https://github.com/sastiam/openspec-cascade";
 /** Ref fijado; se sube con una PR (forja-maintain), nunca solo. */
-export const LOOPER_REF = "0e0b74b3b33d5589778e21a76a1fa5c7f55bdbc9";
+export const LOOPER_REF = "6c3da8cd5df71c4626db862cc5417565126b2ede";
 export const LOOPER_BIN = "openspec-cascade";
 export const LOOPER_ENGINES = ["claude", "opencode", "antigravity"] as const;
 export type LooperEngine = (typeof LOOPER_ENGINES)[number];
+/**
+ * Pipeline de cascade (`--mode`): v1 es el flujo por tareas; v2, el de desarrollo guiado por
+ * especificaciones (SDD) con QA autónomo. `jules` queda fuera a propósito: corre en la nube y
+ * no admite el sandbox que `wt night` exige.
+ */
+export const LOOPER_MODES = ["v1", "v2"] as const;
+export type LooperMode = (typeof LOOPER_MODES)[number];
 
 export const looperDir = (): string =>
   process.env.FORJA_LOOPER_DIR ?? join(home(), ".local", "share", "openspec-cascade");
