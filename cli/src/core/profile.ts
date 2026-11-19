@@ -59,6 +59,11 @@ export interface Profile {
     mounts?: string[];
     idle_minutes?: number;
   };
+  /**
+   * Fedora: repos de terceros (COPR, .repo de un proveedor…) en los que confías. forja solo
+   * habilita los que figuran aquí, con la clave que muestra `plan` (ADR 0017).
+   */
+  fedora?: { trusted_repos: string[] };
   secrets: { provider: "1password" | "none" };
 }
 
@@ -131,6 +136,7 @@ export function validateProfile(raw: TomlTable): Profile {
   const signing = table(raw.signing, "signing");
   const claude = table(raw.claude, "claude");
   const containers = table(raw.containers, "containers");
+  const fedora = table(raw.fedora, "fedora");
   const provider = str(secrets.provider, "secrets.provider") ?? "none";
   if (provider !== "1password" && provider !== "none")
     throw new ProfileError('secrets.provider: "1password" o "none"');
@@ -154,6 +160,7 @@ export function validateProfile(raw: TomlTable): Profile {
       allow_read: strList(claude.allow_read, "claude.allow_read"),
     },
     containers: {},
+    fedora: { trusted_repos: strList(fedora.trusted_repos, "fedora.trusted_repos") },
     secrets: { provider },
   };
   for (const k of ["cpu", "memory_gb", "disk_gb"] as const) {
@@ -244,6 +251,7 @@ export function profileToToml(p: Profile): TomlTable {
   if (p.claude.plugins_skip?.length) claude.plugins_skip = p.claude.plugins_skip;
   if (Object.keys(claude).length) out.claude = claude;
   if (Object.keys(p.containers).length) out.containers = { ...p.containers };
+  if (p.fedora?.trusted_repos.length) out.fedora = { trusted_repos: p.fedora.trusted_repos };
   out.secrets = { provider: p.secrets.provider };
   return out;
 }

@@ -1,0 +1,1 @@
+# Sin paquetes de Fedora: Ghostty viene de un repo de terceros (thirdparty.fedora.toml).

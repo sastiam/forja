@@ -9,6 +9,7 @@ import * as brew from "./runners/brew.ts";
 import * as chezmoi from "./runners/chezmoi.ts";
 import * as dnf from "./runners/dnf.ts";
 import type { Runner } from "./runners/shell.ts";
+import { planThirdParty, readThirdParty, THIRDPARTY_FILE } from "./thirdparty.ts";
 
 export interface Ctx {
   runner: Runner;
@@ -56,6 +57,12 @@ export interface ModulePlan {
 
 export const osName = (platform: string): string =>
   platform === "darwin" ? "darwin" : platform === "linux" ? "linux" : platform;
+
+/** Archivo de repos de terceros de Fedora del módulo, si existe y estamos en Linux. */
+export function thirdPartyFile(m: Module, platform: string): string | null {
+  const file = join(m.dir, THIRDPARTY_FILE);
+  return platform === "linux" && existsSync(file) ? file : null;
+}
 
 /** Archivo de paquetes de Fedora del módulo, si existe y estamos en Linux. */
 export function dnfFile(m: Module, platform: string): string | null {
@@ -115,7 +122,7 @@ export async function planModule(ctx: Ctx, m: Module): Promise<ModulePlan> {
     });
   }
   const pkgFile = dnfFile(m, ctx.platform);
-  if (pkgFile) {
+  if (pkgFile && (await dnf.readPackages(pkgFile)).length) {
     const { state, missing } = await dnf.packagesCheck(ctx.runner, pkgFile);
     actions.push({
       kind: "dnf",
@@ -126,6 +133,15 @@ export async function planModule(ctx: Ctx, m: Module): Promise<ModulePlan> {
       pending: state !== "ok",
     });
   }
+  const thirdParty = thirdPartyFile(m, ctx.platform);
+  if (thirdParty)
+    actions.push(
+      ...(await planThirdParty(
+        ctx.runner,
+        await readThirdParty(thirdParty),
+        ctx.profile?.fedora?.trusted_repos ?? [],
+      )),
+    );
   if (moduleTargets(m, ctx.platform).length && existsSync(chezmoiSource(ctx.root))) {
     const source = chezmoiSource(ctx.root);
     const d = await chezmoi.diff(ctx.runner, source, moduleTargets(m, ctx.platform));

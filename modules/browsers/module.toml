@@ -1,6 +1,6 @@
 name = "browsers"
-summary = "Chrome y Dia (solo instala, sin flags no documentados)"
-os = ["darwin"]
+summary = "Chrome (y Dia en macOS); solo instala, sin flags no documentados"
+os = ["darwin", "linux"]
 depends = ["core"]
 targets = []
 risk = "low"
