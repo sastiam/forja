@@ -79,6 +79,8 @@ jobs:
           node-version: "26"
       - run: npm ci
       - run: npm test
+      - name: cada paquete de packages.fedora.txt existe en los repos de Fedora
+        run: sh scripts/check-fedora-packages.sh
       - name: bootstrap en dry-run
         run: sh bootstrap.sh --dry-run --no-claude
       - name: forja plan --json con perfil de fixture (host fedora)
