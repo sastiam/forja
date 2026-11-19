@@ -1,14 +1,14 @@
 import { existsSync } from "node:fs";
-import { cp, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { log } from "./log.ts";
-import { home } from "./paths.ts";
+import { home, stateDir } from "./paths.ts";
 import { type Action, type CheckResult, tildify } from "./plan.ts";
 import type { Runner } from "./runners/shell.ts";
 
 /**
- * Skills que genera `openspec init` 2.0.0 (`--tools claude`). forja las copia a
+ * Skills que genera `openspec init` (`--tools claude`). forja las copia a
  * ~/.claude/skills en lugar de usar `openspec init` en cada proyecto.
  */
 export const OPENSPEC_SKILLS = [
@@ -26,8 +26,43 @@ export const claudeSkillsDir = (): string =>
 
 const GENERATED_BY = /^\s*generatedBy:\s*"?([^"\r\n]*?)"?\s*$/m;
 const OPENSPEC_VERSION_TIMEOUT_MS = 15000;
-/** Lo que `openspec init` 2.0.0 genera dentro de un proyecto (las skills van en `.agents/skills`). */
-const OPENSPEC_INIT_ARGS = ["init", "--tools", "claude", "--no-animation"];
+/**
+ * `openspec init` genera las skills dentro del proyecto (en `.agents/skills`). Desde
+ * 2.1, qué genera depende de la config GLOBAL del usuario (`~/.config/openspec`:
+ * perfil `custom` o ámbito global dejan el directorio vacío), así que se fija el
+ * perfil y el ámbito y, además, se aísla la config (ver OPENSPEC_ISOLATED_ENV).
+ */
+const OPENSPEC_INIT_ARGS = [
+  "init",
+  "--tools",
+  "claude",
+  "--scope",
+  "project",
+  "--profile",
+  "core",
+  "--no-animation",
+];
+/** Sin telemetría y con una config global vacía: la salida no depende de la máquina. */
+const OPENSPEC_ISOLATED_ENV = (configHome: string): Record<string, string> => ({
+  XDG_CONFIG_HOME: configHome,
+  OPENSPEC_TELEMETRY: "0",
+});
+/**
+ * Desde 2.1 las SKILL.md ya no llevan `generatedBy`. forja anota aquí la versión
+ * de openspec con la que las generó, para saber si están desfasadas.
+ */
+const MARKER_FILE = "openspec-skills.json";
+const markerPath = (): string => join(stateDir(), MARKER_FILE);
+
+/** Versión anotada por forja al instalar las skills, o null si no hay marcador legible. */
+export async function readMarker(): Promise<string | null> {
+  try {
+    const v = (JSON.parse(await readFile(markerPath(), "utf8")) as { version?: unknown }).version;
+    return typeof v === "string" && v ? v : null;
+  } catch {
+    return null;
+  }
+}
 const OPENSPEC_GENERATED_DIR = join(".agents", "skills");
 const OPENSPEC_TMP_PREFIX = "forja-openspec-";
 const SKILL_FILE = "SKILL.md";
@@ -69,12 +104,16 @@ async function openspecVersion(runner: Runner): Promise<string | null> {
   return first ? first : null;
 }
 
-/** Nombre de skill → su `generatedBy` (null si el SKILL.md no lo trae). Solo las que existen. */
+/**
+ * Nombre de skill → versión que la generó. Primero su `generatedBy` (openspec 2.0)
+ * y, si no lo trae (2.1+), la anotada por forja; null si no hay ninguna. Solo las que existen.
+ */
 async function installedSkills(): Promise<Record<string, string | null>> {
   const found: Record<string, string | null> = {};
+  const marker = await readMarker();
   for (const name of OPENSPEC_SKILLS) {
     const file = join(claudeSkillsDir(), name, SKILL_FILE);
-    if (existsSync(file)) found[name] = generatedBy(await readFile(file, "utf8"));
+    if (existsSync(file)) found[name] = generatedBy(await readFile(file, "utf8")) ?? marker;
   }
   return found;
 }
@@ -124,7 +163,10 @@ export async function installSkills(runner: Runner): Promise<void> {
   }
   const tmp = await mkdtemp(join(tmpdir(), OPENSPEC_TMP_PREFIX));
   try {
-    const r = await runner.exec("openspec", OPENSPEC_INIT_ARGS, { cwd: tmp });
+    const configHome = await mkdtemp(join(tmpdir(), OPENSPEC_TMP_PREFIX));
+    const r = await runner
+      .exec("openspec", OPENSPEC_INIT_ARGS, { cwd: tmp, env: OPENSPEC_ISOLATED_ENV(configHome) })
+      .finally(() => rm(configHome, { recursive: true, force: true }));
     if (r.code !== 0) throw new Error(`openspec init falló: ${(r.stderr || r.stdout).trim()}`);
     const generated = join(tmp, OPENSPEC_GENERATED_DIR);
     for (const name of OPENSPEC_SKILLS)
@@ -136,6 +178,11 @@ export async function installSkills(runner: Runner): Promise<void> {
       await rm(target, { recursive: true, force: true });
       await cp(join(generated, name), target, { recursive: true });
       log.step(`skill ${name} instalada en ${tildify(dir)}`);
+    }
+    const version = await openspecVersion(runner);
+    if (version) {
+      await mkdir(stateDir(), { recursive: true });
+      await writeFile(markerPath(), `${JSON.stringify({ version }, null, 2)}\n`);
     }
   } finally {
     await rm(tmp, { recursive: true, force: true });
