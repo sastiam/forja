@@ -1,12 +1,14 @@
 // Gestionado por forja (módulo editor).
+{{- /* cmd en macOS, ctrl en Linux. */}}
+{{- $mod := "cmd" }}{{ if ne .chezmoi.os "darwin" }}{{ $mod = "ctrl" }}{{ end }}
 [
   {
     "context": "Workspace",
     "bindings": {
-      "cmd-alt-t": ["task::Spawn", { "task_name": "pnpm test" }],
-      "cmd-alt-y": ["task::Spawn", { "task_name": "pnpm typecheck" }],
-      "cmd-alt-w": ["task::Spawn", { "task_name": "forja wt ls" }],
-      "cmd-alt-i": ["task::Spawn", { "task_name": "forja wt integrate (rama actual)" }]
+      "{{ $mod }}-alt-t": ["task::Spawn", { "task_name": "pnpm test" }],
+      "{{ $mod }}-alt-y": ["task::Spawn", { "task_name": "pnpm typecheck" }],
+      "{{ $mod }}-alt-w": ["task::Spawn", { "task_name": "forja wt ls" }],
+      "{{ $mod }}-alt-i": ["task::Spawn", { "task_name": "forja wt integrate (rama actual)" }]
     }
   }
 ]

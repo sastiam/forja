@@ -9,3 +9,12 @@ Zed con tsgo (TypeScript y TSX), vtsls (JavaScript) y Biome, ajustado para monor
 - **Tareas** (`tasks.json`) y **atajos** (`keymap.json`): `cmd-alt-t` tests, `cmd-alt-y` typecheck, `cmd-alt-w` `forja wt ls`, `cmd-alt-i` `forja wt integrate` de la rama actual.
 
 Medido en un monorepo pnpm (`alegra-ai-global-agent-backend`): tsgo no consume CPU en reposo (0,0–0,1 %) y ocupa unos 814 MiB, sin que aparezca el bug de watchers con symlinks de pnpm. Si reaparece, vuelve a vtsls en la plantilla y reabre la entrada del BACKLOG.
+
+## En Linux (Fedora)
+
+Zed y la Nerd Font no están en los repos de Fedora (ADR 0017):
+
+- **Zed:** `forja apply editor` descarga el instalador oficial (`https://zed.dev/install.sh`), **te lo muestra** y solo lo ejecuta si confirmas. Sin terminal interactivo, lo omite. Zed se actualiza solo después.
+- **JetBrainsMono Nerd Font:** se descarga la release fija v3.5.1 y se verifica contra un SHA-256 escrito en el código (`modules/editor/linux.ts`); si no coincide, no se instala nada. Va a `~/.local/share/fonts/forja-jetbrains-mono-nerd`. Es la fuente de los iconos de starship y del terminal de Zed.
+- Los atajos usan `ctrl-alt-…` en lugar de `cmd-alt-…`. Biome llega con mise.
+- `--revert` quita la fuente; Zed se desinstala a mano.
