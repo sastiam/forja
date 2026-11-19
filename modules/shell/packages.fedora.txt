@@ -1,5 +1,4 @@
 zsh
-starship
 zoxide
 fzf
 eza
@@ -7,3 +6,4 @@ bat
 ripgrep
 fd-find
 btop
+# starship NO está en los repos de Fedora: lo instala mise (home/private_dot_config/mise).

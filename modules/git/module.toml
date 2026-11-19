@@ -8,4 +8,8 @@ requires_sudo = false
 optional = false
 
 [checks]
-commands = ["git --version", "mergiraf --version", "smerge --version"]
+commands = ["git --version"]
+
+# mergiraf y Sublime Merge: en Linux no están en Fedora (mergiraf) o son opcionales (repo de terceros).
+[checks.darwin]
+commands = ["mergiraf --version", "smerge --version"]
