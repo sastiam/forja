@@ -65,6 +65,32 @@ jobs:
           node cli/src/main.ts plan --json | tee "$RUNNER_TEMP/plan.json"
           node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); if(!p.modules.length) process.exit(1)' "$RUNNER_TEMP/plan.json"
 
+  plan-fedora:
+    name: plan (fedora)
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      # checkout y setup-node necesitan git y tar; los hooks y sus pruebas usan jq (módulo core).
+      # La imagen base de Fedora no trae ninguno.
+      - run: dnf install -y git tar gzip jq
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+      - run: npm ci
+      - run: npm test
+      - name: bootstrap en dry-run
+        run: sh bootstrap.sh --dry-run --no-claude
+      - name: forja plan --json con perfil de fixture (host fedora)
+        run: |
+          export FORJA_CONFIG_DIR="$RUNNER_TEMP/forja-config"
+          export FORJA_STATE_DIR="$RUNNER_TEMP/forja-state"
+          mkdir -p "$FORJA_CONFIG_DIR"
+          cp cli/test/fixtures/profile.fedora.toml "$FORJA_CONFIG_DIR/profile.toml"
+          node cli/src/main.ts plan --json | tee "$RUNNER_TEMP/plan.json"
+          # Debe haber módulos y al menos una acción dnf (la capa de paquetes de Fedora).
+          node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); const k=p.modules.flatMap((m)=>m.actions.map((a)=>a.kind)); if(!p.modules.length||!k.includes("dnf")) process.exit(1)' "$RUNNER_TEMP/plan.json"
+
   secrets:
     runs-on: ubuntu-latest
     steps:
@@ -86,7 +112,7 @@ jobs:
   # exige solo «ci» en GitHub y añade jobs aquí sin tocar la configuración.
   ci:
     if: always()
-    needs: [test, lint, plan, secrets, agnostic]
+    needs: [test, lint, plan, plan-fedora, secrets, agnostic]
     runs-on: ubuntu-latest
     steps:
       - name: todos los jobs en verde

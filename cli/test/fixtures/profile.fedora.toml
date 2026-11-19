@@ -1,0 +1,36 @@
+schema = 1
+host = "fedora"
+modules_extra = []
+modules_skip = ["macos-aggressive"]
+
+[identity]
+name = "Ada Example"
+email = "ada@example.invalid"
+
+[profiles.work]
+enabled = true
+code_dir = "~/code/work"
+
+[profiles.personal]
+code_dir = "~/code/personal"
+
+
+# Tamaño de la VM de Colima (módulo containers); lo que falte se calcula según la máquina.
+# [containers]
+# disk_gb = 40
+# mounts = ["~/code"]   # lo único que ven los contenedores (ADR 0012); nunca vacío
+# idle_minutes = 15     # apagar Colima sin contenedores; 0 = nunca
+
+[secrets]
+provider = "none"
+
+# Extras personales del sandbox de Claude Code (ADR 0010); se suman a hosts/<host>.toml [claude].
+[claude]
+allowed_domains = ["registry.example.invalid"]
+allow_read = ["~/.npmrc"]
+# Modelo por defecto de Claude Code (settings.json "model"); lo que guarda /model.
+# model = "opus"
+# Tema de Claude Code (settings.json "theme"); lo que guarda /config.
+# theme = "dark"
+# Plugins de Claude Code que forja no activa (cli/src/core/claude-plugins.ts).
+plugins_skip = ["quality-guard"]
