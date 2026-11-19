@@ -71,8 +71,9 @@ jobs:
     container: fedora:44
     steps:
       # checkout y setup-node necesitan git y tar; los hooks y sus pruebas usan jq (módulo core);
-      # el Node oficial que instala setup-node necesita libatomic. La imagen base de Fedora no trae ninguno.
-      - run: dnf install -y git tar gzip jq libatomic
+      # el Node oficial que instala setup-node necesita libatomic; chezmoi permite que las pruebas rendericen
+      # las plantillas de verdad. La imagen base de Fedora no trae ninguno.
+      - run: dnf install -y git tar gzip jq libatomic chezmoi
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
