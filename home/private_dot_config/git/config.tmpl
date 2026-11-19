@@ -17,9 +17,12 @@
   trustExitCode = true
 [mergetool]
   keepBackup = false
+{{- /* Sin mergiraf en el PATH (no está en Fedora ni en mise) no se declara el driver: git invocaría un programa inexistente en cada fusión a tres vías. */}}
+{{ if lookPath "mergiraf" -}}
 [merge "mergiraf"]
   name = mergiraf
   driver = mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L
+{{ end -}}
 [rerere]
   enabled = true
   autoUpdate = true

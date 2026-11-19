@@ -1,0 +1,9 @@
+# Repos de terceros de este módulo (ADR 0017). forja solo los habilita si su clave
+# («kind:source») está en [fedora] trusted_repos de tu profile.toml.
+
+# Ghostty no es un paquete oficial de Fedora. Este COPR es el que documenta ghostty.org/docs/install/binary
+# (sección «Linux (Community Binaries)»); es comunitario, no del proyecto.
+[ghostty]
+kind = "copr"
+source = "scottames/ghostty"
+packages = ["ghostty"]

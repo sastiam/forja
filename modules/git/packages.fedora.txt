@@ -1,4 +1,4 @@
 git
 git-delta
 lazygit
-# mergiraf (no está en Fedora) y sublime-merge (repo de terceros): pendientes (ver BACKLOG).
+# sublime-merge viene de un repo de terceros (thirdparty.fedora.toml); mergiraf no está en Fedora: pendiente (BACKLOG).

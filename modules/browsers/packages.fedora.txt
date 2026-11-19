@@ -1,0 +1,1 @@
+# Sin paquetes de Fedora: Chrome viene de un repo de terceros (thirdparty.fedora.toml). Dia solo existe en macOS.

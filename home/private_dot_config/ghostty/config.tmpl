@@ -1,6 +1,8 @@
 # Gestionado por forja (módulo terminal)
+{{- if eq .chezmoi.os "darwin" }}
 macos-option-as-alt = true
 window-save-state = always
+{{- end }}
 shell-integration = zsh
-# VERIFICAR: nombre y valores de esta clave con `ghostty +show-config --default --docs`
+# Valores: never | unfocused | always (desde Ghostty 1.3; `ghostty +show-config --default --docs`)
 notify-on-command-finish = unfocused

@@ -10,14 +10,21 @@ export const PACKAGES_FILE = "packages.fedora.txt";
 /** Consultas con el idioma fijo: rpm traduce sus mensajes y no se debe depender de ellos. */
 const RPM_ENV: Record<string, string> = { LC_ALL: "C" };
 
+/** Nombre de paquete válido (nada de flags, espacios ni metacaracteres de shell). */
+export function parsePackageName(raw: string): string {
+  const name = raw.trim();
+  if (!/^[A-Za-z0-9][A-Za-z0-9+._-]*$/.test(name)) throw new Error(`paquete inválido: ${name}`);
+  return name;
+}
+
 /** Un paquete por línea; `#` empieza un comentario (también al final de la línea). */
 export function parsePackages(text: string): string[] {
   const out: string[] = [];
   for (const raw of text.split("\n")) {
     const name = raw.replace(/#.*$/, "").trim();
     if (!name) continue;
-    if (!/^[A-Za-z0-9][A-Za-z0-9+._-]*$/.test(name)) throw new Error(`paquete inválido: ${name}`);
-    if (!out.includes(name)) out.push(name);
+    const valid = parsePackageName(name);
+    if (!out.includes(valid)) out.push(valid);
   }
   return out;
 }

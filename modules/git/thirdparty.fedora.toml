@@ -1,0 +1,9 @@
+# Repos de terceros de este módulo (ADR 0017). forja solo los habilita si su clave
+# («kind:source») está en [fedora] trusted_repos de tu profile.toml.
+
+# Sublime Merge: repo dnf publicado por Sublime HQ (www.sublimetext.com/docs/linux_repositories.html).
+[sublime-merge]
+kind = "repofile"
+source = "https://download.sublimetext.com/rpm/stable/x86_64/sublime-text.repo"
+repo_id = "sublime-text"
+packages = ["sublime-merge"]

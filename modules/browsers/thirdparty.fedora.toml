@@ -1,0 +1,9 @@
+# Repos de terceros de este módulo (ADR 0017). forja solo los habilita si su clave
+# («kind:source») está en [fedora] trusted_repos de tu profile.toml.
+
+# Google Chrome: Fedora empaqueta la definición del repo (deshabilitada) en
+# fedora-workstation-repositories; habilitarlo equivale al repo oficial de Google.
+[google-chrome]
+kind = "workstation"
+source = "google-chrome"
+packages = ["google-chrome-stable"]

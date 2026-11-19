@@ -17,6 +17,7 @@ import {
   type ModuleCtx,
   moduleTargets,
   osName,
+  thirdPartyFile,
   tildify,
 } from "../core/plan.ts";
 import { confirm, isInteractive } from "../core/prompt.ts";
@@ -24,6 +25,7 @@ import * as brew from "../core/runners/brew.ts";
 import * as chezmoi from "../core/runners/chezmoi.ts";
 import * as dnf from "../core/runners/dnf.ts";
 import { saveLastApply } from "../core/state.ts";
+import { applyThirdParty, readThirdParty } from "../core/thirdparty.ts";
 import { stringify, type TomlTable } from "../core/toml.ts";
 import { renderPlan } from "./plan.ts";
 
@@ -181,6 +183,13 @@ export async function applyCommand(argv: string[]): Promise<number> {
           if (r.code !== 0) throw new Error(`dnf install falló (${r.code})`);
         }
       }
+      const thirdParty = thirdPartyFile(m, ctx.platform);
+      if (thirdParty)
+        await applyThirdParty(
+          ctx.runner,
+          await readThirdParty(thirdParty),
+          ctx.profile.fedora?.trusted_repos ?? [],
+        );
       if (moduleTargets(m, ctx.platform).length) {
         const r = await chezmoi.apply(
           ctx.runner,

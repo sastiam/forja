@@ -1,0 +1,1 @@
+# Sin paquetes de Fedora: Zed y la Nerd Font los instala editor/linux.ts (instalador oficial y descarga con hash fijo).

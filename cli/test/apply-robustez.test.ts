@@ -186,7 +186,7 @@ test("git: detecta identidad y firma en la config global", () => {
 });
 
 test("git: la config del repo no tiene claves personales", () => {
-  const text = readFileSync(join(root, "home/private_dot_config/git/config"), "utf8");
+  const text = readFileSync(join(root, "home/private_dot_config/git/config.tmpl"), "utf8");
   // Convierte el INI a `sección.clave=valor` como `git config --list`.
   let section = "";
   const list: string[] = [];
