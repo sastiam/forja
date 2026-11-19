@@ -51,7 +51,10 @@ test("el perfil valida [claude] como listas de strings", () => {
 });
 
 test("la plantilla de settings.json lee claude_sandbox con valores por defecto", () => {
-  const tmpl = readFileSync(join(root, "home/private_dot_claude/settings.json.tmpl"), "utf8");
+  const tmpl = readFileSync(
+    join(root, "home/private_dot_claude/private_settings.json.tmpl"),
+    "utf8",
+  );
   assert.match(
     tmpl,
     /"allowedDomains": \{\{ get \$sb "allowed_domains" \| default list \| toJson \}\}/,
@@ -65,7 +68,10 @@ test("memoria de tsserver en Zed: un octavo de la RAM entre 3 y 8 GB", async () 
   assert.equal(zedTsMemoryMb(36 * gb), 4608);
   assert.equal(zedTsMemoryMb(8 * gb), 3072);
   assert.equal(zedTsMemoryMb(128 * gb), 8192);
-  const tmpl = readFileSync(join(root, "home/private_dot_config/zed/settings.json.tmpl"), "utf8");
+  const tmpl = readFileSync(
+    join(root, "home/private_dot_config/zed/private_settings.json.tmpl"),
+    "utf8",
+  );
   assert.match(tmpl, /"maxTsServerMemory": \{\{ get \. "zed_ts_memory_mb" \| default 4096 \}\}/);
 });
 
@@ -87,7 +93,10 @@ test("claude.sandbox del perfil debe ser boolean", () => {
 });
 
 test("la plantilla de settings.json respeta claude_sandbox.enabled y wt night lo fuerza", () => {
-  const tmpl = readFileSync(join(root, "home/private_dot_claude/settings.json.tmpl"), "utf8");
+  const tmpl = readFileSync(
+    join(root, "home/private_dot_claude/private_settings.json.tmpl"),
+    "utf8",
+  );
   assert.match(tmpl, /"enabled": \{\{ if hasKey \$sb "enabled" \}\}/);
   const night = readFileSync(join(root, "cli/src/wt/night-sandbox.ts"), "utf8");
   assert.match(night, /enabled: true/);
