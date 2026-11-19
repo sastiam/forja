@@ -7,6 +7,7 @@ import { expandHome, home } from "./paths.ts";
 import type { Profile } from "./profile.ts";
 import * as brew from "./runners/brew.ts";
 import * as chezmoi from "./runners/chezmoi.ts";
+import * as dnf from "./runners/dnf.ts";
 import type { Runner } from "./runners/shell.ts";
 
 export interface Ctx {
@@ -33,7 +34,7 @@ export interface ModuleHooks {
 }
 
 export interface Action {
-  kind: "brew" | "chezmoi" | "step" | "guide";
+  kind: "brew" | "dnf" | "chezmoi" | "step" | "guide";
   description: string;
   pending: boolean;
 }
@@ -55,6 +56,12 @@ export interface ModulePlan {
 
 export const osName = (platform: string): string =>
   platform === "darwin" ? "darwin" : platform === "linux" ? "linux" : platform;
+
+/** Archivo de paquetes de Fedora del módulo, si existe y estamos en Linux. */
+export function dnfFile(m: Module, platform: string): string | null {
+  const file = join(m.dir, dnf.PACKAGES_FILE);
+  return platform === "linux" && existsSync(file) ? file : null;
+}
 
 export async function loadHooks(m: Module): Promise<ModuleHooks> {
   if (!m.hasApply) return {};
@@ -101,6 +108,18 @@ export async function planModule(ctx: Ctx, m: Module): Promise<ModulePlan> {
       description:
         s === "unavailable" ? "brew bundle (Homebrew aún no instalado)" : "brew bundle (Brewfile)",
       pending: s !== "ok",
+    });
+  }
+  const pkgFile = dnfFile(m, ctx.platform);
+  if (pkgFile) {
+    const { state, missing } = await dnf.packagesCheck(ctx.runner, pkgFile);
+    actions.push({
+      kind: "dnf",
+      description:
+        state === "unavailable"
+          ? "dnf install (rpm no disponible: ¿es Fedora?)"
+          : `dnf install${missing.length ? ` (faltan: ${missing.join(", ")}; pedirá sudo)` : " (packages.fedora.txt)"}`,
+      pending: state !== "ok",
     });
   }
   if (m.targets.length && existsSync(chezmoiSource(ctx.root))) {

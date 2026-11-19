@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.1.0-informational.svg)](CHANGELOG.md)
 
-Provisionamiento y optimización de estaciones de desarrollo con un solo comando, asistido por Claude Code (macOS primero; Fedora y Raspberry Pi planificados).
+Provisionamiento y optimización de estaciones de desarrollo con un solo comando, asistido por Claude Code (macOS primero; Fedora en desarrollo; Raspberry Pi planificado).
 
 ## Qué es y para quién
 
@@ -78,7 +78,7 @@ Para no activar alguno: `[claude] plugins_skip` en el perfil.
 | Host | Estado |
 |---|---|
 | Mac (Apple silicon, macOS 26+) | ✅ |
-| Fedora | 🗓 planificado |
+| Fedora 44+ (x86_64) | 🧪 en desarrollo: `core`, `shell`, `git`, `runtimes` y `agents` con dnf (rama `feat/linux-fedora-host`) |
 | Raspberry Pi | 🗓 planificado |
 
 ## Seguridad y privacidad

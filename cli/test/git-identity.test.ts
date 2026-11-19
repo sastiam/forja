@@ -18,10 +18,10 @@ const base = `schema = 1
 host = "h"
 [identity]
 name = "A"
-email = "a@work.invalid"
+email = "work@example.invalid"
 [git.identities.personal]
 name = "Ada"
-email = "ada@users.noreply.invalid"
+email = "ada@example.invalid"
 signing_key = "${humanKey}"
 [git.repos]
 forja = "personal"
@@ -31,7 +31,7 @@ const profile = (extra = ""): Profile => validateProfile(parse(base + extra));
 
 test("identityFor: por nombre de carpeta; sin entrada manda la global", () => {
   const p = profile();
-  assert.equal(identityFor(p, "/x/forja")?.email, "ada@users.noreply.invalid");
+  assert.equal(identityFor(p, "/x/forja")?.email, "ada@example.invalid");
   assert.equal(identityFor(p, "/x/openspec-cascade")?.name, "Ada");
   assert.equal(identityFor(p, "/x/trabajo"), undefined);
   assert.equal(identityFor(null, "/x/forja"), undefined);
@@ -49,7 +49,7 @@ test("humano: identidad a nivel repo (--local), sin tocar el worktree", async ()
   const runner = createFakeRunner(() => ({ code: 0 }));
   const r = await ensureWorktreeIdentity(runner, "/x/forja", "/x/forja.wt/a", "human", profile());
   const calls = runner.calls.join("\n");
-  assert.ok(calls.includes("git config --local user.email ada@users.noreply.invalid"));
+  assert.ok(calls.includes("git config --local user.email ada@example.invalid"));
   assert.ok(calls.includes(`git config --local user.signingkey ${humanKey}`));
   assert.match(calls, /git config --local commit\.gpgsign true/);
   assert.ok(!calls.includes("--worktree"));
@@ -62,7 +62,7 @@ test("agente: clave de agente y email de la identidad en el worktree", async () 
   const r = await ensureWorktreeIdentity(runner, "/x/openspec-cascade", "/w", "night", p);
   const calls = runner.calls.join("\n");
   assert.ok(calls.includes(`git config --worktree user.signingkey ${agentKey}`));
-  assert.ok(calls.includes("git config --worktree user.email ada@users.noreply.invalid"));
+  assert.ok(calls.includes("git config --worktree user.email ada@example.invalid"));
   assert.equal(r.agentSigned, true);
 });
 

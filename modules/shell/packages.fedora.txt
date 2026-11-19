@@ -1,0 +1,9 @@
+zsh
+starship
+zoxide
+fzf
+eza
+bat
+ripgrep
+fd-find
+btop

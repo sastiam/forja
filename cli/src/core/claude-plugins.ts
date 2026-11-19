@@ -19,7 +19,8 @@ export const PLUGINS: Record<string, string> = {
   "aws-core@agent-toolkit-for-aws": "skills y MCP oficiales de AWS (incluye Well-Architected)",
   "codebase-memory@codebase-memory": "grafo de código local (MCP) para buscar con menos tokens",
   "egm@egm": "revisión de specs con revisores Goldfish (EGM); la usa openspec-cascade",
-  "cascade@openspec-cascade": "comandos cascade-spec-* (EGM + spec-gate) y skills de openspec-cascade",
+  "cascade@openspec-cascade":
+    "comandos cascade-spec-* (EGM + spec-gate) y skills de openspec-cascade",
 };
 
 export function marketplaces(root: string): Record<string, MarketplaceSource> {

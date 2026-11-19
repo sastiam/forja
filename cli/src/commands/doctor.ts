@@ -106,7 +106,7 @@ export async function collectFindings(): Promise<Finding[]> {
     for (const name of order) {
       const m = all.get(name);
       if (!m || (m.os.length && !m.os.includes(osName(ctx.platform)))) continue;
-      for (const cmd of m.checks) {
+      for (const cmd of [...m.checks, ...(m.checksByOs[osName(ctx.platform)] ?? [])]) {
         const r = await ctx.runner.query("sh", ["-c", cmd], { timeoutMs: 15000 });
         findings.push({
           name: `${name}: ${cmd}`,

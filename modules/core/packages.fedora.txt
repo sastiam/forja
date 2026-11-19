@@ -1,0 +1,6 @@
+# Paquetes de Fedora para este módulo (un nombre por línea; `forja apply core` instala solo los que faltan).
+coreutils
+jq
+chezmoi
+gh
+# 1password-cli no está en los repos de Fedora: pendiente (ver BACKLOG).

@@ -1,8 +1,9 @@
 name = "fedora"
-status = "planned"
+status = "supported"
 os = "linux"
 arch = "x86_64"
-modules = []
+# Paquetes con dnf (packages.fedora.txt por módulo). containers, terminal, editor y browsers llegan en hitos siguientes.
+modules = ["core", "shell", "git", "runtimes", "agents"]
 
 # Dominios que el sandbox de Claude Code deja salir en todas las máquinas de este tipo.
 # Los personales (empresa, registries privados) van en profile.toml → [claude].

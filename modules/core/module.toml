@@ -1,6 +1,6 @@
 name = "core"
-summary = "Xcode CLT, Homebrew y utilidades base"
-os = ["darwin"]
+summary = "Utilidades base (Xcode CLT y Homebrew en macOS; dnf en Fedora)"
+os = ["darwin", "linux"]
 depends = []
 targets = []
 risk = "low"
@@ -8,4 +8,10 @@ requires_sudo = false
 optional = false
 
 [checks]
-commands = ["brew --version", "jq --version", "gh --version"]
+commands = ["jq --version", "gh --version"]
+
+[checks.darwin]
+commands = ["brew --version"]
+
+[checks.linux]
+commands = ["dnf --version"]
