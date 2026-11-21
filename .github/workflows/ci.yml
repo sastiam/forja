@@ -24,7 +24,7 @@ jobs:
           - { os: macos-latest, node: "26" }
           - { os: ubuntu-latest, node: "22" } # mínimo soportado (engines)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
@@ -35,7 +35,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "26"
@@ -48,7 +48,7 @@ jobs:
     name: plan (macos-latest)
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "26"
@@ -74,7 +74,7 @@ jobs:
       # el Node oficial que instala setup-node necesita libatomic; chezmoi permite que las pruebas rendericen
       # las plantillas de verdad. La imagen base de Fedora no trae ninguno.
       - run: dnf install -y git tar gzip jq libatomic chezmoi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "26"
@@ -97,7 +97,7 @@ jobs:
   secrets:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: gitleaks/gitleaks-action@v2
@@ -108,7 +108,7 @@ jobs:
     name: agnostic (sin datos personales)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: sh scripts/check-agnostic.sh
 
   # Check único para la protección de main y el auto-merge de Dependabot:
