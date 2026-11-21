@@ -25,7 +25,7 @@ jobs:
           - { os: ubuntu-latest, node: "22" } # mínimo soportado (engines)
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
       - run: npm ci
@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "26"
       - run: npm ci
@@ -49,7 +49,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "26"
       - name: bootstrap en dry-run
@@ -75,7 +75,7 @@ jobs:
       # las plantillas de verdad. La imagen base de Fedora no trae ninguno.
       - run: dnf install -y git tar gzip jq libatomic chezmoi
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "26"
       - run: npm ci
